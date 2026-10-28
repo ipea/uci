@@ -40,3 +40,10 @@ vignettes/*.pdf
 # R Environment Variables
 .Renviron
 docs
+
+# Claude Code workflow (only CLAUDE.md + .claude/rules/ are tracked)
+/.claude/*
+!/.claude/rules/
+/MEMORY.md
+/templates/
+/quality_reports/

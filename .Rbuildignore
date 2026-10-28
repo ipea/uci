@@ -11,3 +11,8 @@
 ^codemeta\.json$
 ^docs$
 ^pkgdown$
+^\.claude$
+^CLAUDE\.md$
+^MEMORY\.md$
+^templates$
+^quality_reports$
