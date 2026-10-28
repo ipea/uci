@@ -32,13 +32,16 @@
 #'        separation found. This approach is more computationally expensive and
 #'        although it might not return the maximum theoretical value of spatial
 #'        separation, it is probably very close to it.
-#' @param showProgress A `logical`. Indicates whether to show a progress bar for 
-#'        the bootstrap simulation. Defaults to `TRUE`.
-#' @param parallel Decides whether the function should run in parallel. Defaults 
-#'        is `FALSE.` When `TRUE`, it will use all cores available in 
-#'        `future::plan()` with strategy `"multisession"` internally. Note that 
-#'        it is possible to create your own plan before calling uci(). In this 
-#'        case, do not use this argument.
+#' @param showProgress A `logical`. Kept for backward compatibility. It
+#'        currently has no effect, because the bootstrap simulation is now fast
+#'        enough not to need a progress bar. Defaults to `TRUE`.
+#' @param parallel A `logical`. Only used when `dist_type = "spatial_link"`.
+#'        If `FALSE` (Default), shortest-path distances are computed on a
+#'        single thread (any thread setting made with
+#'        `RcppParallel::setThreadOptions()` is restored on exit). If `TRUE`,
+#'        they are computed in parallel using the
+#'        number of threads set by \{RcppParallel\} (all available cores by
+#'        default, see `RcppParallel::setThreadOptions()`).
 #' 
 #' @family urban centrality index
 #'
@@ -89,29 +92,21 @@ uci <- function(sf_object,
     stop("dist_type must be either 'spatial_link' or 'euclidean'")
     }
   
-  # config progress bar
-  pb_original <- pbapply::pboptions()
-  if (isTRUE(showProgress)) {
-    pbapply::pboptions(char = "-")
-    on.exit(pbapply::pboptions(pb_original))
-  } else {
-    pbapply::pboptions(type = "none")
-    on.exit(pbapply::pboptions(pb_original))
+  # config parallel computing: shortest paths (cppRouting) run on
+  # RcppParallel, which reads RCPP_PARALLEL_NUM_THREADS on every call
+  if (dist_type == 'spatial_link' && isFALSE(parallel)) {
+    threads_original <- Sys.getenv("RCPP_PARALLEL_NUM_THREADS", NA)
+    on.exit(
+      if (is.na(threads_original)) {
+        Sys.unsetenv("RCPP_PARALLEL_NUM_THREADS")
+      } else {
+        Sys.setenv(RCPP_PARALLEL_NUM_THREADS = threads_original)
+      },
+      add = TRUE
+    )
+    Sys.setenv(RCPP_PARALLEL_NUM_THREADS = 1)
   }
-  
-  # config parallel computing
-  if (parallel) {
 
-    cores <- future::availableCores(constraints = "connections-16")
-    if (isTRUE(showProgress)) message(paste('Using', cores, 'CPU cores'))
-
-    with(
-      future::plan(future::multisession), 
-      local = TRUE
-      )
-    
-    }
-  
   
   # change projection to Web Mercator (EPSG:3857)
   sf_object <- suppressWarnings(sf::st_transform(sf_object, 3857))
@@ -144,22 +139,36 @@ uci <- function(sf_object,
 
     # normalize distribution of variable
     var_x_norm <- normalize_distribution( var[var > 0] )
-    
-    # calculate distance matrix
-    distance <- get_euclidean_dist_matrix(sf_object_observed)
-    
+
+    # distances between centroids
+    coords <- get_centroid_coords(sf_object_observed)
+    self <- get_self_distance(sf_object_observed)
+    dist_fun <- function(rows) {
+      fields::rdist(coords[rows, , drop = FALSE], coords)
+    }
+
   } else if (dist_type == 'spatial_link') {
     # plot(sf_object['jobs'])
-    
+
     # normalize distribution of variable
     var_x_norm <- normalize_distribution( var )
-    
-    # calculate distance matrix
-    distance <- get_spatial_link_dist_matrix(sf_object)
+
+    # shortest-path distances along spatial links, between non-empty cells
+    graph <- get_spatial_link_graph(sf_object)
+    keep <- which(var_x_norm > 0)
+    var_x_norm <- var_x_norm[keep]
+    self <- get_self_distance(sf_object)[keep]
+    dist_fun <- function(rows) {
+      cppRouting::get_distance_matrix(Graph = graph,
+                                      from = keep[rows],
+                                      to = keep,
+                                      algorithm = 'mch')
+    }
   }
 
-  # Spatial separation index (venables)
-  v_observed <- venables(var_x_norm, distance)
+  # Spatial separation index (venables), plus the self distance
+  v_observed <- venables_blockwise(var_x_norm, dist_fun) +
+    sum(var_x_norm^2 * self)
   
   
   ###### Find MAX venables spatial separation ----------------------------------
@@ -185,24 +194,25 @@ uci <- function(sf_object,
   
     } else if (dist_type == 'spatial_link') {
     
-      # find positions of cells in the border 
+      # find positions of cells in the border
       border_positions <- which(sf_object$border == 1, arr.ind=TRUE)
-      
-      # filter dist matrix keeping only border cells
-      distance_border <- distance[border_positions, border_positions]
+
+      # shortest-path distances between border cells, plus self distance
+      distance_border <- cppRouting::get_distance_matrix(
+        Graph = graph,
+        from = border_positions,
+        to = border_positions,
+        algorithm = 'mch'
+      )
+      diag(distance_border) <- diag(distance_border) +
+        get_self_distance(sf_border)
     }
-      
-  
+
+
   ### HEURISTIC max venables considering full border
+  # with activities equally spread along the border, b'Db is the mean distance
   if (isFALSE(bootstrap_border)) {
-    
-    b_bootstrap_border <- simulate_border_config(
-      sf_object = sf_border,
-      nbc = 1, # nbc does not matter here, only when bootstrap_border = TRUE
-      output = 'vector',
-      bootstrap_border = bootstrap_border
-    )
-    max_venables <- venables(b = b_bootstrap_border, distance = distance_border)
+    max_venables <- mean(distance_border)
   }
   
   ### bootstrap simulations to find max venables
@@ -217,36 +227,20 @@ uci <- function(sf_object,
     
 
     #### calculate venables of all simulations and get the max value
-    
-    ## run spatial simulations
-    all_sim <- lapply(
+
+    # each simulation spreads activities equally among k randomly sampled
+    # border cells, so b'Db is the mean distance among the (unique) busy cells
+    n_border <- nrow(distance_border)
+    all_sim_venables <- vapply(
       X = all_sim_input,
-      FUN = simulate_border_config,
-      sf_object = sf_border,
-      output = 'vector',
-      bootstrap_border = bootstrap_border)
-    
-      
-    ## calculate venables for all simulations
-    
-    # run sequentially
-    if (isFALSE(parallel)) {
-      all_sim_venables <- pbapply::pblapply(X = all_sim,
-                                            FUN = venables,
-                                            distance = distance_border)
-    }
-    # parallel
-    if (isTRUE(parallel)) {
-      all_sim_venables <- furrr::future_map(
-        .x = all_sim,
-        .f = venables,
-        distance = distance_border,
-        .progress = showProgress
-      )
-    }
-    
+      FUN = function(k) {
+        busy <- unique(sample.int(n_border, size = k, replace = TRUE))
+        mean(distance_border[busy, busy])
+      },
+      FUN.VALUE = numeric(1)
+    )
+
     # get the max value of venables spatial separation from all simulations
-    all_sim_venables <- unlist(all_sim_venables)
     max_venables <- max(all_sim_venables)
   }
   

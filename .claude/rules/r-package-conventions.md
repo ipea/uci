@@ -30,8 +30,7 @@ conflict, Part A wins; flag the conflict in the plan.
 ## A1. Namespacing
 
 - **Always call `package::function()`**: `sf::`, `checkmate::`,
-  `data.table::`, `spdep::`, `cppRouting::`, `fields::`, `pbapply::`,
-  `future::`, `furrr::`, `utils::`.
+  `data.table::`, `spdep::`, `cppRouting::`, `fields::`, `utils::`.
 - `@importFrom` is used only for `utils globalVariables` and `stats dist`
   (`R/uci_package.R`). Don't add more without a plan.
 - Never use `library()`/`require()` in `R/`. Suggested packages (ggplot2 in the
@@ -53,30 +52,36 @@ conflict, Part A wins; flag the conflict in the plan.
   `spatial_separation`, `spatial_separation_max`. Adding columns is a
   user-facing change (NEWS); removing or renaming one is breaking.
 - **`NA` in `var_name` means 0** (documented in `@param var_name`).
-- **Global state:** every change to `pbapply::pboptions()` and
-  `future::plan()` is restored with `on.exit(..., add = TRUE)`. The
-  `pboptions` restore is the first `on.exit()` (no `add`); the
-  `future::plan()` restore comes later with `add = TRUE`. Any new `on.exit()`
-  uses `add = TRUE` and must not precede the first one.
-- **Users may set their own `future::plan()`** before calling with
-  `parallel = FALSE`; never override a user plan silently.
+- **Global state:** every change to global state is restored with
+  `on.exit(..., add = TRUE)`. Today the only one is
+  `RCPP_PARALLEL_NUM_THREADS = 1`, set by `uci()` (not inside a helper,
+  so the cap covers every `cppRouting::get_distance_matrix()` call) when
+  `dist_type = "spatial_link"` and `parallel = FALSE`; it is restored to
+  its previous value, or unset if it was unset.
+- **`parallel = TRUE` changes nothing:** cppRouting then uses
+  RcppParallel's default or the user's own `RcppParallel::setThreadOptions()`.
+  `showProgress` is a documented no-op kept for back-compat.
 
 ## A3. Numerical discipline (the core of this package)
 
 - The index formula is `UCI = LC × (1 − V / V_max)` (Pereira et al. 2013).
-  Changing any of `location_coef()`, `venables()`, the distance matrices, the
+  Changing any of `location_coef()`, `venables_blockwise()`, the distance
+  matrices, the
   self-distance term `sqrt(area / π)`, the border detection or the V_max
   search changes published numbers → maintainer decision, NEWS entry under a
   breaking/major heading, and the Gate 1 before/after table.
 - Distances and areas must be in the same units (see the comment in
   `get_euclidean_dist_matrix()`). Any CRS change must keep this true; strip
   `units` explicitly (`as.numeric()`) only where intended.
-- The bootstrap uses `sample()`: tests and comparisons set a seed. Parallel
-  runs via `furrr` need `furrr::furrr_options(seed = TRUE)` for
-  reproducibility if randomness ever moves into the parallel step [NEW].
+- The bootstrap uses `sample.int()`: tests and comparisons set a seed. It
+  relies on `b'Db = mean(D[u, u])` for activity split equally over the unique
+  sampled cells `u`; keep the draw order if you touch it (pinned test values).
+- `uci()` never holds a full n × n distance matrix for the observed cells:
+  `venables_blockwise()` builds it in row blocks. Only the border matrix is
+  dense.
 - Compare doubles with `testthat::expect_equal()` (tolerance), never `==`.
-- Distance matrices are dense n × n; anything that builds them more than once
-  per call is a performance bug.
+- Building a dense n × n matrix of all cells (or building any distance matrix
+  more than once per call) is a performance bug.
 
 ## A4. Messages and errors
 
@@ -163,7 +168,9 @@ items; keep that style.
   `@examples`. `\donttest{}` for slow-but-correct examples; never `\dontrun{}`
   to hide errors.
 - **CPU:** CRAN machines allow at most 2 cores. Never use more than 2 cores in
-  examples, tests or vignettes (`parallel = TRUE` uses `availableCores() - 1`).
+  examples, tests or vignettes. `parallel = FALSE` runs spatial-link shortest
+  paths on 1 thread; tests with `parallel = TRUE` (all cores) stay under
+  `skip_on_cran()`.
 - **Red flags:**
 
 | Red flag | Do instead |
@@ -186,7 +193,7 @@ items; keep that style.
 [ ] pkg::fun() everywhere
 [ ] checkmate validation; output data.frame columns unchanged (or NEWS)
 [ ] input sf_object not modified; test proves it
-[ ] global state (pboptions, future plan, RNG) restored with on.exit(add = TRUE)
+[ ] global state (RCPP_PARALLEL_NUM_THREADS, RNG) restored with on.exit(add = TRUE)
 [ ] numeric before/after on grid_bho for all 4 dist_type × bootstrap combos (if math touched)
 [ ] numeric test with a known value, not only class checks
 [ ] slow tests/examples: skip_on_cran() / \donttest{}; ≤ 2 cores

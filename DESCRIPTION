@@ -22,9 +22,6 @@ Imports:
     checkmate,
     cppRouting,
     data.table,
-    furrr,
-    future,
-    pbapply,
     fields,
     sf,
     spdep,
@@ -35,10 +32,11 @@ Suggests:
     ggplot2,
     rmarkdown,
     stats,
-    testthat
+    testthat (>= 3.2.0)
 VignetteBuilder: 
     knitr
 Encoding: UTF-8
+Config/testthat/edition: 3
 NeedsCompilation: no
 Roxygen: list(markdown = TRUE)
-RoxygenNote: 7.3.3
+Config/roxygen2/version: 8.1.0

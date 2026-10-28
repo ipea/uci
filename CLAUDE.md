@@ -17,7 +17,8 @@ Maintainer: Rafael H. M. Pereira. License MIT. Docs:
   `dist_type` × `bootstrap_border` combinations, seeded) and an explanation of
   every difference.
 - **Never surprise the caller.** `uci()` does not modify the user's `sf`
-  object, global options, the `future` plan or the RNG beyond what it restores.
+  object, global options, environment variables or the RNG beyond what it
+  restores.
 - **CRAN-ready at all times.** `R CMD check --as-cran`: 0 errors, 0 warnings.
 - **Plan first.** Enter plan mode before non-trivial tasks. Every plan is
   reviewed by two adversarial agents (Minimalist + Skeptic) that improve it and
@@ -42,8 +43,8 @@ uci/
 ├── DESCRIPTION, NAMESPACE        # NAMESPACE is roxygen-generated; never hand-edit
 ├── R/
 │   ├── uci.R                     # the only export: uci()
-│   ├── internal_fun.R            # helpers: location_coef, venables, distance matrices,
-│   │                             #   normalize_distribution, simulate_border_config
+│   ├── internal_fun.R            # helpers: location_coef, venables_blockwise, self-distance,
+│   │                             #   distance matrices / spatial-link graph, normalize_distribution
 │   └── uci_package.R             # package doc, importFrom, utils::globalVariables()
 ├── tests/testthat/test_uci.R     # single test file (tester() wrapper)
 ├── tests/tests_rafa/             # maintainer scratch scripts; not part of the suite
@@ -62,10 +63,12 @@ How `uci()` works (`R/uci.R`):
 3. **Observed Venables spatial separation** `V = bᵀ D b`, with `D` the
    Euclidean (centroids, `fields::rdist`) or spatial-link (queen contiguity,
    `spdep` + `cppRouting` shortest paths) distance matrix, plus a self-distance
-   `sqrt(area/π)` on the diagonal (Crafts & Mulatu 2006).
+   `sqrt(area/π)` on the diagonal (Crafts & Mulatu 2006). `D` is built in row
+   blocks (`venables_blockwise()`), never as a full n × n matrix.
 4. **Max Venables** from activities spread along the border cells: one
-   heuristic configuration (`bootstrap_border = FALSE`) or 400 × 50 random
-   border configurations (`TRUE`, optionally in parallel via `furrr`).
+   heuristic configuration (`bootstrap_border = FALSE`, `mean(D_border)`) or
+   400 × 50 random border configurations (`TRUE`, `mean(D_border[u, u])` each).
+   `parallel` sets the spatial-link shortest-path threads (FALSE = 1 thread).
 5. `UCI = LC × (1 − V / V_max)`; returns a one-row `data.frame`
    (`UCI`, `location_coef`, `spatial_separation`, `spatial_separation_max`).
 
@@ -88,9 +91,9 @@ covr::package_coverage()
 
 - Run R through the **PowerShell** tool or from script files: `>` and `|`
   inside `Rscript -e '...'` are mangled by the shell (see `MEMORY.md`).
-- `bootstrap_border = TRUE` runs ~20,000 Venables products; `parallel = TRUE`
-  starts a `multisession` plan. Both make tests and examples slow — watch CRAN
-  timing NOTEs.
+- `bootstrap_border = TRUE` evaluates 20,000 border configurations (cheap
+  submatrix means); `parallel = TRUE` lets cppRouting use all cores for
+  spatial-link distances, so keep it out of CRAN tests and examples.
 
 ---
 

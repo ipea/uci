@@ -1,8 +1,14 @@
 # uci (development version)
 
+* Major changes
+  * `uci()` is faster and uses much less memory. With `bootstrap_border = TRUE`, each of the 20,000 simulated border configurations is now evaluated algebraically from the border distance matrix instead of by a full matrix product. With `dist_type = "spatial_link"`, distances are built from the sparse neighbour list, and the full distance matrix is never held in memory, so large grids no longer need several n × n matrices. Results are unchanged (up to floating-point rounding).
+  * The `parallel` argument now controls the number of threads used to compute shortest-path distances when `dist_type = "spatial_link"`, and it has no effect with `"euclidean"`. With `parallel = FALSE` (default) these distances are computed on a single thread. Previously {cppRouting} silently used all cores. For mid-size grids this default can be slower than before, so use `parallel = TRUE` to use all cores (or the number set with `RcppParallel::setThreadOptions()`). `uci()` no longer uses {future}/{furrr}, so a `future::plan()` set by the user has no effect.
+
 * Minor changes
+  * New sample data set `inst/extdata/grid_rio.rds`: a hexagonal grid of Rio de Janeiro with a concave outline, islands and isolated cells, based on data from the Access to Opportunities Project (Ipea, 2019).
   * `uci()` now raises informative errors when `var_name` has negative, infinite or non-numeric values, when all its values are 0 or `NA`, and, with `dist_type = "spatial_link"`, when the polygons don't form one contiguous area. These cases previously returned `NaN`/`NA` or a cryptic error from {spdep}.
-  * With `parallel = TRUE`, the "Using N CPU cores" message is now shown only when `showProgress = TRUE`.
+  * `showProgress` is kept for backward compatibility but no longer shows a progress bar.
+  * {furrr}, {future} and {pbapply} are no longer dependencies.
 
 
 # uci 0.3.1

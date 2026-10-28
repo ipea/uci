@@ -46,14 +46,17 @@ separation found. This approach is more computationally expensive and
 although it might not return the maximum theoretical value of spatial
 separation, it is probably very close to it.}
 
-\item{showProgress}{A \code{logical}. Indicates whether to show a progress bar for
-the bootstrap simulation. Defaults to \code{TRUE}.}
+\item{showProgress}{A \code{logical}. Kept for backward compatibility. It
+currently has no effect, because the bootstrap simulation is now fast
+enough not to need a progress bar. Defaults to \code{TRUE}.}
 
-\item{parallel}{Decides whether the function should run in parallel. Defaults
-is \code{FALSE.} When \code{TRUE}, it will use all cores available in
-\code{future::plan()} with strategy \code{"multisession"} internally. Note that
-it is possible to create your own plan before calling uci(). In this
-case, do not use this argument.}
+\item{parallel}{A \code{logical}. Only used when \code{dist_type = "spatial_link"}.
+If \code{FALSE} (Default), shortest-path distances are computed on a
+single thread (any thread setting made with
+\code{RcppParallel::setThreadOptions()} is restored on exit). If \code{TRUE},
+they are computed in parallel using the
+number of threads set by \{RcppParallel\} (all available cores by
+default, see \code{RcppParallel::setThreadOptions()}).}
 }
 \description{
 Calculates the Urban Centrality Index (UCI) as in Pereira et al., (2013) \doi{10.1111/gean.12002}.
@@ -105,6 +108,11 @@ Useful links:
 }
 \author{
 \strong{Maintainer}: Rafael H. M. Pereira \email{rafa.pereira.br@gmail.com} (\href{https://orcid.org/0000-0003-2125-7465}{ORCID})
+
+Authors:
+\itemize{
+  \item Rafael H. M. Pereira \email{rafa.pereira.br@gmail.com} (\href{https://orcid.org/0000-0003-2125-7465}{ORCID})
+}
 
 }
 \concept{urban centrality index}

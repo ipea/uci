@@ -99,6 +99,36 @@ df <- uci(
 head(df)
 ```
 
+The package also includes a larger and more irregular sample data set, `grid_rio.rds`. It covers the municipality of Rio de Janeiro, Brazil, with a concave outline around the Guanabara and Sepetiba bays and several islands, including single isolated cells. The data comes from the [Access to Opportunities Project](https://www.ipea.gov.br/acessooportunidades/en/) (AOP, Ipea, 2019), aggregated to H3 resolution 8. Because of its islands, the full grid only works with `dist_type = 'euclidean'`:
+
+```{r, eval = TRUE}
+grid_rio <- readRDS(file.path(data_dir, "grid_rio.rds"))
+
+df <- uci(
+  sf_object = grid_rio,
+  var_name = 'jobs',
+  dist_type = 'euclidean'
+  )
+
+head(df)
+```
+
+To use `dist_type = 'spatial_link'`, keep only one contiguous area, for example the largest group of neighbouring polygons:
+
+```{r, eval = TRUE, warning = FALSE}
+nb <- spdep::poly2nb(grid_rio, queen = TRUE)
+comp <- spdep::n.comp.nb(nb)$comp.id
+mainland <- grid_rio[comp == which.max(table(comp)), ]
+
+df <- uci(
+  sf_object = mainland,
+  var_name = 'jobs',
+  dist_type = 'spatial_link'
+  )
+
+head(df)
+```
+
 
 ## Formal definition of UCI
 
@@ -145,7 +175,7 @@ In the original paper, @pereira2013urbancentrality proposed a simple heuristic a
 
 ### Bootstraping `Vmax`
 
-Using bootstrap to find max Venables spatial separation. Users can set `parallel = TRUE` to speed uo computation using parallel processing.
+Using bootstrap to find max Venables spatial separation. With `dist_type = "spatial_link"`, users can set `parallel = TRUE` to compute shortest-path distances using several threads.
 
 
 ```{r, eval = TRUE}
