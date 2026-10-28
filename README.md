@@ -1,18 +1,18 @@
-<img align="right" src="https://github.com/ipeaGIT/uci/raw/main/man/figures/uci_hex.png" alt="ipea" width="250">
+<img align="right" src="https://github.com/ipea/uci/raw/main/man/figures/uci_hex.png" alt="ipea" width="250">
 
 # uci: Urban Centrality Index
 
 [![CRAN
    status](https://www.r-pkg.org/badges/version/uci)](https://CRAN.R-project.org/package=uci)
    [![CRAN/METACRAN Total downloads](https://cranlogs.r-pkg.org/badges/grand-total/uci?color=blue)](https://CRAN.R-project.org/package=uci)
-[![R-CMD-check](https://github.com/ipeaGIT/uci/workflows/rcmdcheck/badge.svg)](https://github.com/ipeaGIT/uci/actions)
+[![R-CMD-check](https://github.com/ipea/uci/workflows/rcmdcheck/badge.svg)](https://github.com/ipea/uci/actions)
 [![Codecov test
-coverage](https://codecov.io/gh/ipeaGIT/uci/branch/main/graph/badge.svg)](https://app.codecov.io/gh/ipeaGIT/uci?branch=main)
+coverage](https://codecov.io/gh/ipea/uci/branch/main/graph/badge.svg)](https://app.codecov.io/gh/ipea/uci?branch=main)
 [![DOI](https://img.shields.io/badge/DOI-10.1111/gean.12002-blue)](https://doi.org/10.1111/gean.12002)
 [![Lifecycle:
      experimental](https://img.shields.io/badge/lifecycle-experimental-orange.svg)](https://lifecycle.r-lib.org/articles/stages.html)
 
-**uci** is an `R` package to calculate the Urban Centrality Index (UCI) originally proposed by Pereira et al., (2013). The UCI measures the extent to which the spatial organization of a city or region varies from extreme polycentric to extreme monocentric in a continuous scale from 0 to 1. Values close to 0 indicate more polycentric patterns and values close to 1 indicate a more monocentric urban form. More info on [this vignette](https://ipeagit.github.io/uci/articles/uci.html).
+**uci** is an `R` package to calculate the Urban Centrality Index (UCI) originally proposed by Pereira et al., (2013). The UCI measures the extent to which the spatial organization of a city or region varies from extreme polycentric to extreme monocentric in a continuous scale from 0 to 1. Values close to 0 indicate more polycentric patterns and values close to 1 indicate a more monocentric urban form. More info on [this vignette](https://ipea.github.io/uci/articles/uci.html).
 
 * [Link to ungated PDF of the Pereira et al., (2013) paper](https://www.urbandemographics.org/publication/2013_urban_centrality_index/)
 
@@ -25,7 +25,7 @@ install.packages('uci')
 
 # or use the development version with latest features
 utils::remove.packages('uci')
-devtools::install_github("ipeaGIT/uci")
+devtools::install_github("ipea/uci")
 ```
 
 
@@ -67,7 +67,7 @@ head(df)
 ```
 
 
-# Citation <img align="right" src="https://github.com/ipeaGIT/uci/raw/main/man/figures/ipea_logo.png" alt="ipea" width="300">
+# Citation <img align="right" src="https://github.com/ipea/uci/raw/main/man/figures/ipea_logo.png" alt="ipea" width="300">
 
  The R package **uci** is developed by a team at the Institute for Applied 
  Economic Research (Ipea), Brazil. If you use this package in research 

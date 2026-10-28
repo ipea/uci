@@ -67,7 +67,7 @@ Calculate Urban Centrality Index
 \section{Usage}{
 
 Please check the vignettes and data documentation on the
-\href{https://ipeagit.github.io/uci/index.html}{website}.
+\href{https://ipea.github.io/uci/index.html}{website}.
 }
 
 \examples{
@@ -97,9 +97,9 @@ head(df2)
 \seealso{
 Useful links:
 \itemize{
-  \item \url{https://github.com/ipeaGIT/uci}
-  \item \url{https://ipeagit.github.io/uci/}
-  \item Report bugs at \url{https://github.com/ipeaGIT/uci/issues}
+  \item \url{https://github.com/ipea/uci}
+  \item \url{https://ipea.github.io/uci/}
+  \item Report bugs at \url{https://github.com/ipea/uci/issues}
 }
 
 }

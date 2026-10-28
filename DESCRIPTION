@@ -1,7 +1,7 @@
 Type: Package
 Package: uci
 Title: Urban Centrality Index
-Version: 0.3.1
+Version: 0.3.1.9000
 Authors@R: c(
     person("Rafael H. M.", "Pereira", , "rafa.pereira.br@gmail.com", role = c("aut", "cre"),
            comment = c(ORCID = "0000-0003-2125-7465"))
@@ -13,9 +13,9 @@ Description: Calculates the Urban Centrality Index (UCI) as in Pereira et al.,
              scale from 0 to 1. Values closer to 0 indicate more polycentric patterns
              and values closer to 1 indicate a more monocentric urban form.
 License: MIT + file LICENSE
-URL: https://github.com/ipeaGIT/uci,
-    https://ipeagit.github.io/uci/
-BugReports: https://github.com/ipeaGIT/uci/issues
+URL: https://github.com/ipea/uci,
+    https://ipea.github.io/uci/
+BugReports: https://github.com/ipea/uci/issues
 Depends: 
     R (>= 4.2.0)
 Imports:

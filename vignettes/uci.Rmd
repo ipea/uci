@@ -29,7 +29,7 @@ use_suggested_pkgs <- (requireNamespace("ggplot2",quietly = TRUE))
 install.packages('uci')
 
 # development version from GitHub
-remotes::install_github("ipeaGIT/uci")
+remotes::install_github("ipea/uci")
 
 ```
 

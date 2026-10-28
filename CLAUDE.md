@@ -3,9 +3,9 @@
 **uci** is an R package that calculates the Urban Centrality Index (UCI) as in
 Pereira et al. (2013) <doi:10.1111/gean.12002>. The UCI measures how far the
 spatial organisation of a city or region sits between extreme polycentric (0)
-and extreme monocentric (1). Published on CRAN; developed at Ipea (ipeaGIT).
+and extreme monocentric (1). Published on CRAN; developed at Ipea (GitHub org `ipea`).
 Maintainer: Rafael H. M. Pereira. License MIT. Docs:
-<https://ipeagit.github.io/uci/>. Default branch: `main`.
+<https://ipea.github.io/uci/>. Default branch: `main`.
 
 ---
 
