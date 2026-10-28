@@ -1,3 +1,9 @@
+# uci 0.3.1
+
+* Bug fix
+  * Avoid errors when detecting the number of available cores for parallel processing.
+
+
 # uci 0.3.0
 
 * Major changes

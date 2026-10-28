@@ -3,7 +3,6 @@
 \docType{package}
 \name{uci}
 \alias{uci}
-\alias{_PACKAGE}
 \alias{uci-package}
 \title{Urban Centrality Index}
 \usage{
@@ -49,7 +48,7 @@ separation, it is probably very close to it.}
 the bootstrap simulation. Defaults to \code{TRUE}.}
 
 \item{parallel}{Decides whether the function should run in parallel. Defaults
-is \code{FALSE.} When \code{TRUE}, it will use all cores available minus one using
+is \code{FALSE.} When \code{TRUE}, it will use all cores available in
 \code{future::plan()} with strategy \code{"multisession"} internally. Note that
 it is possible to create your own plan before calling uci(). In this
 case, do not use this argument.}

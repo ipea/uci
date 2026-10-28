@@ -33,7 +33,7 @@
 #' @param showProgress A `logical`. Indicates whether to show a progress bar for 
 #'        the bootstrap simulation. Defaults to `TRUE`.
 #' @param parallel Decides whether the function should run in parallel. Defaults 
-#'        is `FALSE.` When `TRUE`, it will use all cores available minus one using
+#'        is `FALSE.` When `TRUE`, it will use all cores available in 
 #'        `future::plan()` with strategy `"multisession"` internally. Note that 
 #'        it is possible to create your own plan before calling uci(). In this 
 #'        case, do not use this argument.
@@ -96,12 +96,15 @@ uci <- function(sf_object,
   
   # config parallel computing
   if (parallel) {
-    # number of cores
-    cores <- max(1, future::availableCores() - 1)
+
+    cores <- future::availableCores(constraints = "connections-16")
     message(paste('Using', cores, 'CPU cores'))
+
+    with(
+      future::plan(future::multisession), 
+      local = TRUE
+      )
     
-    oplan <- future::plan("multisession", workers = cores)
-    on.exit(future::plan(oplan), add = TRUE)
     }
   
   

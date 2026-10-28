@@ -74,11 +74,7 @@ ggplot(data = grid) +
 ## Calculating UCI
 
 In the example below, we calculate how mono/polycentric our study area is considering its spatial distribution of jobs.
-
-Mind you that, by default, the `uci()` functions uses Euclidean distances between polygons.
-  * The `uci` function now has a new parameter `dist_type` that allows users to choose  whether calculations should be based on `"euclidean"` distances (Default) or `"spatial_link"` distances. Spatial link distances consider Euclidean distances along the links of spatial neighbour links. In the case of areas with a concave shape (like a bay), it is strongly recommended to use `"spatial_link"` distances (even though they are computationally more costly) because simple Euclidean distances can bias UCI estimates in those cases.
-
-
+ 
 ```{r, eval = TRUE}
 df <- uci(
   sf_object = grid,
@@ -88,9 +84,10 @@ df <- uci(
 
 head(df)
 ```
-By default, the `uci()` functions uses Euclidean distances between polygons. However, Euclidean distances can lead to misleading results in the case of areas with a concave shape (like a bay). In these cases, it is strongly recommended to use `dist_type = 'spatial_link'` distances, even though they are a bit computationally more costly. 
 
-Mind you that when using `"spatial_link"` distances, there should be no disconnected island of polygon (or group of polygons). In some cases, users might need to manually edit their spatial data to include a polygon representing a road or bridge connecting disconnected parts of the area.
+By default, the `uci()` function uses Euclidean distances between polygons. However, Euclidean distances can lead to misleading results in the case of areas with a concave shape (like a bay). In these cases, it is strongly recommended to use `dist_type = 'spatial_link'`. These spatial link distances consider Euclidean distances along the links of spatial neighbour links. This is a bit more costly computationally speaking, but it does return more realistic results. 
+
+Mind you, though, that when using `"spatial_link"` distances, there should be no disconnected island of polygon (or group of polygons). In some cases, users might need to manually edit their spatial data to include a polygon representing a road or bridge connecting disconnected parts of the area.
 
 ```{r, eval = TRUE}
 df <- uci(
