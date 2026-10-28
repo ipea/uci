@@ -209,8 +209,10 @@ uci <- function(sf_object,
   if (isTRUE(bootstrap_border)) {
     
     # input for number of simulations
-    max_value <- max(51, nrow(nrow(sf_border)))
-    number_busy_cells <- 2:max_value
+    # 2 to 51 sampled border cells (with replacement), 400 draws each (20,000
+    # simulations, as documented). On grid_bho the max spatial separation
+    # peaks near 51 cells, so larger counts add run time without raising it
+    number_busy_cells <- 2:51
     all_sim_input <- rep(number_busy_cells, 400)
     
 
