@@ -1,3 +1,10 @@
+# uci (development version)
+
+* Minor changes
+  * `uci()` now raises informative errors when `var_name` has negative, infinite or non-numeric values, when all its values are 0 or `NA`, and, with `dist_type = "spatial_link"`, when the polygons don't form one contiguous area. These cases previously returned `NaN`/`NA` or a cryptic error from {spdep}.
+  * With `parallel = TRUE`, the "Using N CPU cores" message is now shown only when `showProgress = TRUE`.
+
+
 # uci 0.3.1
 
 * Bug fix

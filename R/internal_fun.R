@@ -63,6 +63,16 @@ get_spatial_link_dist_matrix <- function(sf_object){
     # suppressMessages( dists <- sfdep::st_nb_dists(geo, nb) )
   ## using spdep
     nb <- spdep::poly2nb(geo, queen=TRUE)
+
+    # isolated polygons or separate clusters have no path between them
+    if (spdep::n.comp.nb(nb)$nc > 1) {
+      stop(
+        "Polygons in 'sf_object' must form one contiguous area when ",
+        "dist_type = 'spatial_link'. Use dist_type = 'euclidean' instead.",
+        call. = FALSE
+      )
+    }
+
     point_surface <-  sf::st_point_on_surface(geo)
     suppressWarnings( dists <- spdep::nbdists(nb, point_surface, longlat = FALSE) )
     
@@ -96,7 +106,7 @@ get_spatial_link_dist_matrix <- function(sf_object){
   od_df <- nb_list_to_df(nb, dists)
   
   # create graph
-  graph  <-  cppRouting::makegraph(od_df, directed = F)
+  graph  <-  cppRouting::makegraph(od_df, directed = FALSE)
   
   # distances
   dist_link <- cppRouting::get_distance_matrix(Graph=graph, 

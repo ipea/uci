@@ -16,7 +16,9 @@ uci(
 )
 }
 \arguments{
-\item{sf_object}{A \verb{POLYGON sf data.frame} of the study area.}
+\item{sf_object}{A \verb{POLYGON sf data.frame} of the study area. Distances and
+areas are computed in EPSG:3857 (Web Mercator), which distorts very
+large regions.}
 
 \item{var_name}{A \code{string}. The name of the column in \code{sf_object} with the
 number of activities/opportunities/resources/services to be considered

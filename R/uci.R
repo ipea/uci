@@ -6,7 +6,9 @@
 #' scale from 0 to 1. Values close to 0 indicate more polycentric patterns and 
 #' values close to 1 indicate a more monocentric urban form.
 #' 
-#' @param sf_object A `POLYGON sf data.frame` of the study area.
+#' @param sf_object A `POLYGON sf data.frame` of the study area. Distances and
+#'        areas are computed in EPSG:3857 (Web Mercator), which distorts very
+#'        large regions.
 #' @param var_name A `string`. The name of the column in `sf_object` with the 
 #'        number of activities/opportunities/resources/services to be considered 
 #'        when calculating urban centrality levels. `NA` values are considered 
@@ -78,7 +80,10 @@ uci <- function(sf_object,
   checkmate::assert_logical(showProgress, len = 1, any.missing = FALSE)
   checkmate::assert_logical(parallel, len = 1, any.missing = FALSE)
   assert_var_name(sf_object, var_name)
-  
+  checkmate::assert_numeric(
+    sf_object[[var_name]], lower = 0, finite = TRUE, .var.name = var_name
+  )
+
   checkmate::assert_string(dist_type)
   if(isFALSE(dist_type %in% c('spatial_link', 'euclidean'))){
     stop("dist_type must be either 'spatial_link' or 'euclidean'")
@@ -98,7 +103,7 @@ uci <- function(sf_object,
   if (parallel) {
 
     cores <- future::availableCores(constraints = "connections-16")
-    message(paste('Using', cores, 'CPU cores'))
+    if (isTRUE(showProgress)) message(paste('Using', cores, 'CPU cores'))
 
     with(
       future::plan(future::multisession), 
@@ -108,7 +113,7 @@ uci <- function(sf_object,
     }
   
   
-  # change projection to UTM
+  # change projection to Web Mercator (EPSG:3857)
   sf_object <- suppressWarnings(sf::st_transform(sf_object, 3857))
 
   ###### observed Location Coefficient -----------------------------------------
@@ -116,6 +121,9 @@ uci <- function(sf_object,
   # replace NAs with 0
   var <- sf_object[var_name][[1]]
   var <- data.table::fifelse(is.na(var), 0, var)
+  if (sum(var) == 0) {
+    stop("All values of 'var_name' are 0 or NA.", call. = FALSE)
+  }
   # var <- var[var > 0]
   
   # normalize distribution of variable
@@ -133,10 +141,7 @@ uci <- function(sf_object,
     # keep non-empty cells
     sf_object_observed <- sf_object[ var > 0, var_name]
     # plot(sf_object_observed['job_count'])
-    
-    summary(sf_object$jobs)
-    summary(sf_object_observed$jobs)
-    
+
     # normalize distribution of variable
     var_x_norm <- normalize_distribution( var[var > 0] )
     

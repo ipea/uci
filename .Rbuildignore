@@ -1,7 +1,7 @@
 ^.*\.Rproj$
 ^\.Rproj\.user$
 ^\.github$
-^tests_rafa$
+^tests/tests_rafa$
 ^codecov\.yml$
 ^cran-comments\.md$
 ^CRAN-SUBMISSION$
