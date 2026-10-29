@@ -49,7 +49,8 @@ gates are in
     uci/
     ├── DESCRIPTION, NAMESPACE        # NAMESPACE is roxygen-generated; never hand-edit
     ├── R/
-    │   ├── uci.R                     # the only export: uci()
+    │   ├── uci.R                     # main export: uci()
+    │   ├── remove_islands.R          # export: remove_islands() (also used by uci())
     │   ├── internal_fun.R            # helpers: location_coef, venables_blockwise, self-distance,
     │   │                             #   distance matrices / spatial-link graph, normalize_distribution
     │   └── uci_package.R             # package doc, importFrom, utils::globalVariables()

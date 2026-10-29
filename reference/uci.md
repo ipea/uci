@@ -89,7 +89,8 @@ uci(
   kept, and polygons outside it, along with their activities, are
   dropped before any calculation. This applies to both `dist_type`s, and
   it lets `"spatial_link"` distances be used in areas with islands.
-  Defaults to `FALSE`.
+  Defaults to `FALSE`. See
+  [`remove_islands()`](https://ipea.github.io/uci/reference/remove_islands.md).
 
 ## Usage
 
@@ -105,6 +106,9 @@ Useful links:
 - <https://ipea.github.io/uci/>
 
 - Report bugs at <https://github.com/ipea/uci/issues>
+
+Other urban centrality index:
+[`remove_islands()`](https://ipea.github.io/uci/reference/remove_islands.md)
 
 ## Author
 

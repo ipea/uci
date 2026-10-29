@@ -219,6 +219,10 @@ group of neighbouring polygons:</p>
 <span><span class="va">df</span></span>
 <span><span class="co">#&gt;         UCI location_coef spatial_separation spatial_separation_max</span></span>
 <span><span class="co">#&gt; 1 0.3166672     0.6894746           19331.93               35752.71</span></span></code></pre></div>
+<p>To see which polygons are dropped before calculating UCI, use the
+function <code><a href="../reference/remove_islands.html">remove_islands()</a></code>. It returns the <code>sf</code>
+object with only the largest group of neighbouring polygons, which you
+can map and then pass to <code><a href="../reference/uci.html">uci()</a></code>.</p>
 </div>
 <div class="section level3">
 <h3 id="formal-definition-of-uci">Formal definition of UCI<a class="anchor" aria-label="anchor" href="#formal-definition-of-uci"></a>

@@ -29,7 +29,12 @@
     `dist_type = "spatial_link"` can be used in areas with islands.
     Polygons outside that group, and their activities, are dropped from
     the calculation, and a message reports how many (when
-    `showProgress = TRUE`).
+    `showProgress = TRUE`). The same step is available as the new
+    function
+    [`remove_islands()`](https://ipea.github.io/uci/reference/remove_islands.md),
+    which returns the filtered `sf` object, so it can be inspected or
+    mapped before calling
+    [`uci()`](https://ipea.github.io/uci/reference/uci.md).
   - New sample data set `inst/extdata/grid_rio.rds`: a hexagonal grid of
     Rio de Janeiro with a concave outline, islands and isolated cells,
     based on data from the Access to Opportunities Project (Ipea, 2019).

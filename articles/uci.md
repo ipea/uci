@@ -195,6 +195,13 @@ df
 #> 1 0.3166672     0.6894746           19331.93               35752.71
 ```
 
+To see which polygons are dropped before calculating UCI, use the
+function
+[`remove_islands()`](https://ipea.github.io/uci/reference/remove_islands.md).
+It returns the `sf` object with only the largest group of neighbouring
+polygons, which you can map and then pass to
+[`uci()`](https://ipea.github.io/uci/reference/uci.md).
+
 ### Formal definition of UCI
 
 The **Urban Centrality Index (UCI)** is given by the product of the
