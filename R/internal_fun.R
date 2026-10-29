@@ -1,14 +1,10 @@
+# raise a failed checkmate check as a cli error, attributed to the caller.
+# arg and res are passed as values, so braces in them are not interpolated
 #' @keywords internal
-assert_var_name <- function(sf_object, var_name) {
-
-  checkmate::assert_data_frame(sf_object)
-  checkmate::assert_class(sf_object, 'sf')
-  checkmate::assert_names(
-    names(sf_object),
-    must.include = var_name,
-    .var.name = "sf_object"
-  )
-
+abort_if_invalid <- function(res, arg, call = parent.frame()) {
+  if (!isTRUE(res)) {
+    cli::cli_abort("{.arg {arg}}: {res}", call = call)
+  }
   return(invisible(TRUE))
 }
 
@@ -80,14 +76,24 @@ get_spatial_link_graph <- function(sf_object) {
     # nb <- sfdep::st_contiguity(geo)
     # suppressMessages( dists <- sfdep::st_nb_dists(geo, nb) )
   ## using spdep
-    nb <- spdep::poly2nb(geo, queen=TRUE)
+    # spdep's warnings (no neighbours, sub-graphs) are reported by the
+    # contiguity error below
+    nb <- suppressWarnings(spdep::poly2nb(geo, queen = TRUE))
 
     # isolated polygons or separate clusters have no path between them
-    if (spdep::n.comp.nb(nb)$nc > 1) {
-      stop(
-        "Polygons in 'sf_object' must form one contiguous area when ",
-        "dist_type = 'spatial_link'. Use dist_type = 'euclidean' instead.",
-        call. = FALSE
+    nc <- spdep::n.comp.nb(nb)$nc
+    if (nc > 1) {
+      cli::cli_abort(
+        c(
+          "Polygons in {.arg sf_object} must form one contiguous area when
+           {.arg dist_type} is {.val spatial_link}.",
+          "i" = "Found {nc} separate groups of polygons.",
+          "i" = "Small gaps between polygons that should touch can cause this.",
+          "i" = "Use {.arg dist_type} = {.val euclidean} instead, or
+                 {.arg remove_islands} = {.val {TRUE}} to keep only the
+                 largest group."
+        ),
+        call = NULL
       )
     }
 

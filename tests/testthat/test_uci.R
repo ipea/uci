@@ -9,13 +9,15 @@ tester <- function(sf_object = grid,
                    dist_type = 'euclidean',
                    bootstrap_border = FALSE,
                    showProgress = TRUE,
-                   parallel = FALSE) {
+                   parallel = FALSE,
+                   remove_islands = FALSE) {
   uci(sf_object,
       var_name,
       dist_type,
       bootstrap_border,
       showProgress,
-      parallel)
+      parallel,
+      remove_islands = remove_islands)
 }
 
 
@@ -73,11 +75,11 @@ test_that("returns the expected values on a grid with islands", {
 
   # spatial_link needs one contiguous area: keep the largest component
   testthat::skip_on_cran()
-  nb <- suppressWarnings(spdep::poly2nb(sf::st_geometry(grid_rio), queen = TRUE))
-  comp <- spdep::n.comp.nb(nb)$comp.id
-  mainland <- grid_rio[comp == which.max(table(comp)), ]
-
-  result <- tester(sf_object = mainland, dist_type = 'spatial_link')
+  testthat::expect_message(
+    result <- tester(sf_object = grid_rio, dist_type = 'spatial_link',
+                     remove_islands = TRUE),
+    "Removed 44 polygons"
+  )
   testthat::expect_equal(result$UCI, 0.3166672492, tolerance = 1e-6)
 
 })
@@ -164,13 +166,18 @@ test_that("does not change the input", {
 # ERRORS and messages  -----------------------
 test_that("raises errors due to incorrect input", {
 
-  testthat::expect_error(tester(sf_object='banana'))
+  testthat::expect_error(tester(sf_object='banana'), class = "rlang_error")
   testthat::expect_error(tester(var_name = 'banana'))
   testthat::expect_error(tester(dist_type = 'banana'))
   testthat::expect_error(tester(dist_type = 123))
+  testthat::expect_error(tester(dist_type = NULL), class = "rlang_error")
+  testthat::expect_error(
+    tester(dist_type = c('euclidean', 'spatial_link')), class = "rlang_error"
+  )
   testthat::expect_error(tester(bootstrap_border = 'banana'))
   testthat::expect_error(tester(showProgress = 'banana'))
   testthat::expect_error(tester(parallel = 'banana'))
+  testthat::expect_error(tester(remove_islands = 'banana'))
 
 })
 
@@ -178,7 +185,13 @@ test_that("raises errors due to invalid values in var_name", {
 
   grid_zero <- grid
   grid_zero$jobs <- 0
-  testthat::expect_error(tester(sf_object = grid_zero), "0 or NA")
+  testthat::expect_error(
+    tester(sf_object = grid_zero), "0 or NA", class = "rlang_error"
+  )
+
+  grid_na <- grid
+  grid_na$jobs <- NA
+  testthat::expect_error(tester(sf_object = grid_na), "0 or NA")
 
   grid_neg <- grid
   grid_neg$jobs[1] <- -5
@@ -197,11 +210,66 @@ test_that("raises error for non-contiguous polygons with spatial_link", {
   sf::st_crs(island) <- sf::st_crs(grid)
   grid_island <- rbind(grid, island)
 
-  suppressWarnings(
+  testthat::expect_no_warning(
     testthat::expect_error(
       tester(sf_object = grid_island, dist_type = 'spatial_link'),
       "contiguous"
     )
   )
+  testthat::expect_error(
+    tester(sf_object = grid_island, dist_type = 'spatial_link'),
+    "2 separate groups"
+  )
+  testthat::expect_error(
+    tester(sf_object = grid_island, dist_type = 'spatial_link'),
+    "remove_islands"
+  )
+
+  # remove_islands drops the island cell, so results match the original grid
+  grid_island2 <- grid_island
+  testthat::expect_message(
+    result <- tester(sf_object = grid_island2, dist_type = 'spatial_link',
+                     remove_islands = TRUE),
+    "Removed 1 polygon"
+  )
+  testthat::expect_identical(grid_island2, grid_island)
+  testthat::expect_equal(result, tester(dist_type = 'spatial_link'))
+  testthat::expect_equal(
+    suppressMessages(tester(sf_object = grid_island, remove_islands = TRUE)),
+    tester()
+  )
+  testthat::expect_no_message(
+    tester(sf_object = grid_island, remove_islands = TRUE,
+           showProgress = FALSE)
+  )
+
+  # all activity on the removed island: the error names remove_islands
+  grid_only_island <- grid_island
+  grid_only_island$jobs <- 0
+  grid_only_island$jobs[nrow(grid_only_island)] <- 1
+  testthat::expect_error(
+    tester(sf_object = grid_only_island, remove_islands = TRUE,
+           showProgress = FALSE),
+    "remove_islands"
+  )
+
+  # a single polygon has no islands
+  testthat::expect_equal(
+    tester(sf_object = grid[1, ], remove_islands = TRUE),
+    tester(sf_object = grid[1, ])
+  )
+
+})
+
+test_that("braces in user text are not interpolated in error messages", {
+
+  grid_brace <- grid
+  names(grid_brace)[names(grid_brace) == "jobs"] <- "a{b}"
+  grid_brace[["a{b}"]][1] <- -1
+  testthat::expect_error(
+    tester(sf_object = grid_brace, var_name = "a{b}"),
+    "a{b}", fixed = TRUE, class = "rlang_error"
+  )
+  testthat::expect_error(tester(var_name = "{zz}"), "{zz}", fixed = TRUE)
 
 })

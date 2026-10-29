@@ -12,7 +12,8 @@ uci(
   dist_type = "euclidean",
   bootstrap_border = FALSE,
   showProgress = TRUE,
-  parallel = FALSE
+  parallel = FALSE,
+  remove_islands = FALSE
 )
 }
 \arguments{
@@ -46,9 +47,10 @@ separation found. This approach is more computationally expensive and
 although it might not return the maximum theoretical value of spatial
 separation, it is probably very close to it.}
 
-\item{showProgress}{A \code{logical}. Kept for backward compatibility. It
-currently has no effect, because the bootstrap simulation is now fast
-enough not to need a progress bar. Defaults to \code{TRUE}.}
+\item{showProgress}{A \code{logical}. If \code{TRUE} (Default), \code{uci()} reports how
+many polygons were removed by \code{remove_islands}. It no longer shows a
+progress bar, because the bootstrap simulation is now fast enough not
+to need one.}
 
 \item{parallel}{A \code{logical}. Only used when \code{dist_type = "spatial_link"}.
 If \code{FALSE} (Default), shortest-path distances are computed on a
@@ -57,6 +59,14 @@ single thread (any thread setting made with
 they are computed in parallel using the
 number of threads set by \{RcppParallel\} (all available cores by
 default, see \code{RcppParallel::setThreadOptions()}).}
+
+\item{remove_islands}{A \code{logical}. If \code{TRUE}, only the largest group of
+neighbouring polygons (queen contiguity), i.e. the one with the most
+polygons, is kept, and polygons
+outside it, along with their activities, are dropped before any
+calculation. This applies to both \code{dist_type}s, and it lets
+\code{"spatial_link"} distances be used in areas with islands. Defaults
+to \code{FALSE}.}
 }
 \description{
 Calculates the Urban Centrality Index (UCI) as in Pereira et al., (2013) \doi{10.1111/gean.12002}.

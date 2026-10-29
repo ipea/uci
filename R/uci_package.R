@@ -11,6 +11,7 @@
 #'
 #' @importFrom utils globalVariables
 #' @importFrom stats dist
+#' @importFrom rlang abort
 "_PACKAGE"
 
 

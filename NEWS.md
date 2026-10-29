@@ -5,10 +5,12 @@
   * The `parallel` argument now controls the number of threads used to compute shortest-path distances when `dist_type = "spatial_link"`, and it has no effect with `"euclidean"`. With `parallel = FALSE` (default) these distances are computed on a single thread. Previously {cppRouting} silently used all cores. For mid-size grids this default can be slower than before, so use `parallel = TRUE` to use all cores (or the number set with `RcppParallel::setThreadOptions()`). `uci()` no longer uses {future}/{furrr}, so a `future::plan()` set by the user has no effect.
 
 * Minor changes
+  * New argument `remove_islands` in `uci()`. If `TRUE`, only the largest group of neighbouring polygons is kept, so `dist_type = "spatial_link"` can be used in areas with islands. Polygons outside that group, and their activities, are dropped from the calculation, and a message reports how many (when `showProgress = TRUE`).
   * New sample data set `inst/extdata/grid_rio.rds`: a hexagonal grid of Rio de Janeiro with a concave outline, islands and isolated cells, based on data from the Access to Opportunities Project (Ipea, 2019).
   * `uci()` now raises informative errors when `var_name` has negative, infinite or non-numeric values, when all its values are 0 or `NA`, and, with `dist_type = "spatial_link"`, when the polygons don't form one contiguous area. These cases previously returned `NaN`/`NA` or a cryptic error from {spdep}.
   * `showProgress` is kept for backward compatibility but no longer shows a progress bar.
   * {furrr}, {future} and {pbapply} are no longer dependencies.
+  * Errors are now raised with {cli}: messages are reworded and formatted, and have class `rlang_error`. An all-`NA` `var_name` column now gives the informative "0 or NA" error instead of a {data.table} type error. {cli} and {rlang} are new dependencies.
 
 
 # uci 0.3.1

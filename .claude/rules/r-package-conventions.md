@@ -29,12 +29,14 @@ conflict, Part A wins; flag the conflict in the plan.
 
 ## A1. Namespacing
 
-- **Always call `package::function()`**: `sf::`, `checkmate::`,
+- **Always call `package::function()`**: `sf::`, `checkmate::`, `cli::`,
   `data.table::`, `spdep::`, `cppRouting::`, `fields::`, `utils::`.
-- `@importFrom` is used only for `utils globalVariables` and `stats dist`
-  (`R/uci_package.R`). Don't add more without a plan.
-- Never use `library()`/`require()` in `R/`. Suggested packages (ggplot2 in the
-  vignette) are guarded with `requireNamespace("pkg", quietly = TRUE)`.
+- `@importFrom` is used only for `utils globalVariables`, `stats dist` and
+  `rlang abort` (`R/uci_package.R`; rlang is imported only because
+  `cli::cli_abort()` needs it and cli merely suggests it). Don't add more
+  without a plan.
+- Never use `library()`/`require()` in `R/`. The vignette loads ggplot2
+  (Suggests) unconditionally, by the maintainer's choice (2026-10-28).
 - NSE column names go into `utils::globalVariables(c(...))` in
   `R/uci_package.R`; check for duplicates first.
 
@@ -42,12 +44,13 @@ conflict, Part A wins; flag the conflict in the plan.
 
 - **Single export.** Signature: `uci(sf_object, var_name, dist_type =
   "euclidean", bootstrap_border = FALSE, showProgress = TRUE, parallel =
-  FALSE)`. Argument names and order are public API: renaming or reordering
+  FALSE, remove_islands = FALSE)`. Argument names and order are public API: renaming or reordering
   needs a deprecation cycle and the maintainer's decision. (`showProgress` is
   camelCase for consistency with Ipea's other packages — don't "fix" it.)
-- **Inputs:** validated up front with `checkmate::assert_*` and the internal
-  `assert_var_name()`. New enumerated options: `checkmate::assert_choice()`
-  for a single value.
+- **Inputs:** validated up front with `checkmate::check_*()` raised through
+  the internal `abort_if_invalid(res, arg)` (a cli error attributed to
+  `uci()`). Never `checkmate::assert_*` (it bypasses cli). New enumerated
+  options: `checkmate::check_choice()`.
 - **Output:** a one-row `data.frame` with columns `UCI`, `location_coef`,
   `spatial_separation`, `spatial_separation_max`. Adding columns is a
   user-facing change (NEWS); removing or renaming one is breaking.
@@ -60,7 +63,8 @@ conflict, Part A wins; flag the conflict in the plan.
   its previous value, or unset if it was unset.
 - **`parallel = TRUE` changes nothing:** cppRouting then uses
   RcppParallel's default or the user's own `RcppParallel::setThreadOptions()`.
-  `showProgress` is a documented no-op kept for back-compat.
+  `showProgress` no longer shows a progress bar; its only effect is the
+  `remove_islands` message.
 
 ## A3. Numerical discipline (the core of this package)
 
@@ -85,11 +89,17 @@ conflict, Part A wins; flag the conflict in the plan.
 
 ## A4. Messages and errors
 
-- **Today:** base `stop()` and `message()`.
-- **[NEW]** New or modified messages use `cli::cli_abort()`,
-  `cli::cli_warn()`, `cli::cli_inform()` — but `cli` is **not** in Imports
-  yet, so adopting it is itself a plan (new dependency). Until then, new code
-  uses `stop(..., call. = FALSE)` and matches the existing wording style.
+- **Every condition goes through {cli}:** `cli::cli_abort()`,
+  `cli::cli_warn()`, `cli::cli_inform()`. No base `stop()`, `warning()`,
+  `message()` or `stopifnot()` in `R/`. Check with
+  `grep -nE "stop\(|warning\(|message\(|stopifnot|assert_" R/`.
+- User-supplied text (column names, checkmate messages) is passed as a
+  value (`"{.arg {arg}}: {res}"`), never pasted into the format string, so
+  braces in it are not interpolated.
+- Errors from internal helpers use `call = NULL` or are raised through
+  `abort_if_invalid()` so they don't name an internal function.
+- Third-party warnings that duplicate one of our errors are muffled
+  (`suppressWarnings()`) and their information moved into the cli message.
 - **[NEW]** Informational messages are gated on `showProgress` (or a future
   `quiet`), never unconditional.
 
@@ -154,7 +164,8 @@ items; keep that style.
 
 ## A9. Figures (vignette, README, pkgdown)
 
-- ggplot2 is in Suggests; vignette chunks that use it are gated.
+- ggplot2 is in Suggests and the vignette loads it unconditionally (no
+  `requireNamespace()` guard).
 - **[NEW]** New or modified figures: one consistent theme, a colour-blind-safe
   palette (viridis), labelled legends, fixed `fig.width`/`fig.height`/`dpi`.
 
@@ -178,7 +189,7 @@ items; keep that style.
 | `library()`/`require()` in `R/` | `pkg::fun()` |
 | Writing outside `tempdir()` | Write only to `tempdir()` or user-supplied paths |
 | `<<-` to global env | Return values |
-| `print()`/`cat()` in functions | `message()` gated on `showProgress` |
+| `print()`/`cat()` in functions | `cli::cli_inform()` gated on `showProgress` |
 | options / plan / RNG changed, not restored | `on.exit(..., add = TRUE)` |
 | `T`/`F` | `TRUE`/`FALSE` |
 | `==` on doubles | `all.equal()` / tolerance |
@@ -191,7 +202,8 @@ items; keep that style.
 
 ```
 [ ] pkg::fun() everywhere
-[ ] checkmate validation; output data.frame columns unchanged (or NEWS)
+[ ] checkmate check_* + abort_if_invalid(); all conditions via cli
+[ ] output data.frame columns unchanged (or NEWS)
 [ ] input sf_object not modified; test proves it
 [ ] global state (RCPP_PARALLEL_NUM_THREADS, RNG) restored with on.exit(add = TRUE)
 [ ] numeric before/after on grid_bho for all 4 dist_type × bootstrap combos (if math touched)

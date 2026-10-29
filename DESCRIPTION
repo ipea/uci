@@ -20,9 +20,11 @@ Depends:
     R (>= 4.2.0)
 Imports:
     checkmate,
+    cli (>= 3.2.0),
     cppRouting,
     data.table,
     fields,
+    rlang (>= 1.0.0),
     sf,
     spdep,
     utils

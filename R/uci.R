@@ -32,9 +32,10 @@
 #'        separation found. This approach is more computationally expensive and
 #'        although it might not return the maximum theoretical value of spatial
 #'        separation, it is probably very close to it.
-#' @param showProgress A `logical`. Kept for backward compatibility. It
-#'        currently has no effect, because the bootstrap simulation is now fast
-#'        enough not to need a progress bar. Defaults to `TRUE`.
+#' @param showProgress A `logical`. If `TRUE` (Default), `uci()` reports how
+#'        many polygons were removed by `remove_islands`. It no longer shows a
+#'        progress bar, because the bootstrap simulation is now fast enough not
+#'        to need one.
 #' @param parallel A `logical`. Only used when `dist_type = "spatial_link"`.
 #'        If `FALSE` (Default), shortest-path distances are computed on a
 #'        single thread (any thread setting made with
@@ -42,7 +43,14 @@
 #'        they are computed in parallel using the
 #'        number of threads set by \{RcppParallel\} (all available cores by
 #'        default, see `RcppParallel::setThreadOptions()`).
-#' 
+#' @param remove_islands A `logical`. If `TRUE`, only the largest group of
+#'        neighbouring polygons (queen contiguity), i.e. the one with the most
+#'        polygons, is kept, and polygons
+#'        outside it, along with their activities, are dropped before any
+#'        calculation. This applies to both `dist_type`s, and it lets
+#'        `"spatial_link"` distances be used in areas with islands. Defaults
+#'        to `FALSE`.
+#'
 #' @family urban centrality index
 #'
 #' @examples
@@ -74,23 +82,40 @@ uci <- function(sf_object,
                 dist_type = "euclidean", 
                 bootstrap_border = FALSE,
                 showProgress = TRUE,
-                parallel = FALSE){
-  
-  # check inputs
-  checkmate::assert_class(sf_object, 'sf')
-  checkmate::assert_string(var_name)
-  checkmate::assert_logical(bootstrap_border, len = 1, any.missing = FALSE)
-  checkmate::assert_logical(showProgress, len = 1, any.missing = FALSE)
-  checkmate::assert_logical(parallel, len = 1, any.missing = FALSE)
-  assert_var_name(sf_object, var_name)
-  checkmate::assert_numeric(
-    sf_object[[var_name]], lower = 0, finite = TRUE, .var.name = var_name
-  )
+                parallel = FALSE,
+                remove_islands = FALSE){
 
-  checkmate::assert_string(dist_type)
-  if(isFALSE(dist_type %in% c('spatial_link', 'euclidean'))){
-    stop("dist_type must be either 'spatial_link' or 'euclidean'")
-    }
+  # check inputs
+  abort_if_invalid(checkmate::check_class(sf_object, 'sf'), "sf_object")
+  abort_if_invalid(checkmate::check_string(var_name), "var_name")
+  abort_if_invalid(
+    checkmate::check_logical(bootstrap_border, len = 1, any.missing = FALSE),
+    "bootstrap_border"
+  )
+  abort_if_invalid(
+    checkmate::check_logical(showProgress, len = 1, any.missing = FALSE),
+    "showProgress"
+  )
+  abort_if_invalid(
+    checkmate::check_logical(parallel, len = 1, any.missing = FALSE),
+    "parallel"
+  )
+  abort_if_invalid(
+    checkmate::check_logical(remove_islands, len = 1, any.missing = FALSE),
+    "remove_islands"
+  )
+  abort_if_invalid(
+    checkmate::check_names(names(sf_object), must.include = var_name),
+    "sf_object"
+  )
+  abort_if_invalid(
+    checkmate::check_numeric(sf_object[[var_name]], lower = 0, finite = TRUE),
+    paste0("sf_object$", var_name)
+  )
+  abort_if_invalid(
+    checkmate::check_choice(dist_type, c('spatial_link', 'euclidean')),
+    "dist_type"
+  )
   
   # config parallel computing: shortest paths (cppRouting) run on
   # RcppParallel, which reads RCPP_PARALLEL_NUM_THREADS on every call
@@ -111,13 +136,47 @@ uci <- function(sf_object,
   # change projection to Web Mercator (EPSG:3857)
   sf_object <- suppressWarnings(sf::st_transform(sf_object, 3857))
 
+  # keep only the largest group of neighbouring polygons (if tied, the group
+  # of the earliest row: n.comp.nb numbers groups in row order)
+  # (spdep::poly2nb() fails on a single polygon, which has no islands anyway)
+  islands_removed <- FALSE
+  if (isTRUE(remove_islands) && nrow(sf_object) > 1) {
+    nb <- suppressWarnings(
+      spdep::poly2nb(sf::st_geometry(sf_object), queen = TRUE)
+    )
+    comp <- spdep::n.comp.nb(nb)$comp.id
+    keep <- comp == which.max(table(comp))
+    if (!all(keep)) {
+      if (isTRUE(showProgress)) {
+        n_dropped <- prettyNum(
+          sum(sf_object[[var_name]][!keep], na.rm = TRUE), big.mark = ","
+        )
+        cli::cli_inform(
+          "Removed {sum(!keep)} polygon{?s} ({n_dropped} {.field {var_name}})
+           outside the largest contiguous area of {.arg sf_object}."
+        )
+      }
+      sf_object <- sf_object[keep, ]
+      islands_removed <- TRUE
+    }
+  }
+
   ###### observed Location Coefficient -----------------------------------------
   
   # replace NAs with 0
-  var <- sf_object[var_name][[1]]
+  # as.numeric() so that an all-NA logical column reaches the error below
+  var <- as.numeric(sf_object[[var_name]])
   var <- data.table::fifelse(is.na(var), 0, var)
   if (sum(var) == 0) {
-    stop("All values of 'var_name' are 0 or NA.", call. = FALSE)
+    cli::cli_abort(
+      c(
+        "All values of {.field {var_name}} in {.arg sf_object} are 0 or NA.",
+        if (islands_removed) c(
+          "i" = "Polygons outside the largest contiguous area were removed
+                 by {.arg remove_islands}."
+        )
+      )
+    )
   }
   # var <- var[var > 0]
   
