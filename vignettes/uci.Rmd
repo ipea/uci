@@ -184,27 +184,34 @@ $$
 
 The normalization by `Vmax` is what makes the comparison of urban areas of different shapes and sizes possible. However, the estimation of `Vmax` is not trivial, because it has no closed-form solution. In a very simple square grid, `Vmax` is obtained when each corner has one-fourth of the total employment. In a region forming a perfect circle, the maximum value of V occurs when all employment is evenly distributed along the external edge.
 
-In the original paper, @pereira2013urbancentrality proposed a simple heuristic approach to calculate `Vmax`(the "opposite of maximum proximity") as a homogeneous distribution of values along the edge of the study area. This is the default strategy used in the `uci()` function with the default parameter `bootstrap_border = FALSE`. Nonetheless, the users can also use a bootstrap simulation approach to estimate `Vmax` by setting `bootstrap_border = TRUE`.
+### Finding `Vmax`
 
-### Bootstraping `Vmax`
-
-Using bootstrap to find max Venables spatial separation. With `dist_type = "spatial_link"`, users can set `parallel = TRUE` to compute shortest-path distances using several threads.
-
+By default (`max_method = "exact"`), `uci()` searches for the distribution of activities among the polygons on the border of the study area that maximises `V`. With Euclidean distances between centroids this problem is concave, so the search (a simple multiplicative update of the weights, stopped when the optimality conditions hold) reaches the global maximum. The result is then refined with the self distance of each polygon included, so that `Vmax` is a stationary point of the same quantity as `V`, and checked against the polygons outside the border. With `"spatial_link"` distances the same procedure gives a stationary point.
 
 ```{r, eval = TRUE}
-df_bootstrap <- uci(
+df_exact <- uci(
   sf_object = grid,
   var_name = 'jobs',
-  bootstrap_border = TRUE,
   showProgress = FALSE
 )
 
-head(df_bootstrap)
+head(df_exact)
 ```
 
-This bootstrap approach simulates 20000 random distributions of activities along the border. It practice, it works interacting two simulations: (1) it simulates that all jobs are concentrated in up to 2, 3, 4, 5 ... 51 polygons along the border, and (2) for each number of selected polygons, it shuffles 400 random positions of those polygons along the border.
+With `dist_type = "spatial_link"`, users can set `parallel = TRUE` to compute shortest-path distances using several threads.
 
-The bootstrap approach is more computationally expensive but it returns `Vmax` values that can be between 5 and 25% higher than the heuristic approach. Although the bootstrap simulation might still not return the maximum theoretical value of spatial separation, it is probably very close to it
+Two other approaches are kept so that results of previous versions can be reproduced. In the original paper, @pereira2013urbancentrality proposed a simple heuristic approach to calculate `Vmax` (the "opposite of maximum proximity") as a homogeneous distribution of values along the edge of the study area (`max_method = "heuristic"`). The bootstrap approach (`max_method = "bootstrap"`) simulates 20000 random distributions of activities along the border: it simulates that all jobs are concentrated in up to 2, 3, 4, 5 ... 51 polygons along the border, and for each number of selected polygons it shuffles 400 random positions of those polygons along the border, keeping the largest `V` found. Both are lower bounds of `Vmax`, so they overestimate `V / Vmax` and underestimate UCI, by an amount that depends on the shape of the study area.
+
+```{r, eval = TRUE}
+df_heuristic <- uci(
+  sf_object = grid,
+  var_name = 'jobs',
+  max_method = "heuristic",
+  showProgress = FALSE
+)
+
+head(df_heuristic)
+```
 
 
 # References

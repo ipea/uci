@@ -6,7 +6,8 @@
 #' scale from 0 to 1. Values close to 0 indicate more polycentric patterns and 
 #' values close to 1 indicate a more monocentric urban form.
 #' 
-#' @param sf_object A `POLYGON sf data.frame` of the study area. Distances and
+#' @param sf_object A `POLYGON sf data.frame` of the study area, with at
+#'        least two polygons. Distances and
 #'        areas are computed in EPSG:3857 (Web Mercator), which distorts very
 #'        large regions.
 #' @param var_name A `string`. The name of the column in `sf_object` with the 
@@ -20,18 +21,32 @@
 #'        (like a bay), it is strongly recommended to use `"spatial_link"` 
 #'        distances (even though they are computationally more costly) because 
 #'        simple Euclidean distances can bias UCI estimates in those cases.
-#' @param bootstrap_border A `logical`. The calculation of UCI requires one to 
-#'        find the maximum value of the Venables spatial separation index of the 
-#'        study area. If `bootstrap_border = FALSE` (Default), the function uses 
-#'        a heuristic approach that assumes that the max spatial separation 
-#'        would occur when all activities were equally distributed along the 
-#'        border of the study  area. This is a fast approach, but it does not 
-#'        reach the maximum spatial separation. Alternatively, if `bootstrap_border = TRUE`, 
-#'        the function uses a bootstrap approach that simulates 20000 random 
-#'        distributions of activities along the border and uses the max spatial 
-#'        separation found. This approach is more computationally expensive and
-#'        although it might not return the maximum theoretical value of spatial
-#'        separation, it is probably very close to it.
+#' @param bootstrap_border A `logical`. Deprecated, use
+#'        `max_method = "bootstrap"`. If `TRUE` and `max_method` is `NULL`,
+#'        the bootstrap is used; an explicit `max_method` takes precedence.
+#' @param max_method A `string`, or `NULL` (Default), which means `"exact"`
+#'        unless `bootstrap_border = TRUE`. How to find the maximum value of
+#'        the Venables spatial separation index that the study area admits
+#'        (`spatial_separation_max`), which normalises the index. `"exact"`
+#'        searches for the distribution of activities among the
+#'        border polygons that maximises the spatial separation. The search
+#'        is done on the distances between polygon centroids, where the
+#'        maximum is global for Euclidean distances, and the result is then
+#'        refined with the self distance of each polygon included in the
+#'        distances, so that it is a stationary point of the same quantity as
+#'        `spatial_separation`. UCI is 0 (up to the solver tolerance) when the
+#'        activities sit on that maximising configuration. With
+#'        `"spatial_link"` distances the same procedure gives a stationary
+#'        point. `"heuristic"` is the approach of Pereira et al. (2013),
+#'        which assumes that the maximum occurs when all activities are
+#'        equally distributed along the border of the study area. It is fast,
+#'        but it does not reach the maximum spatial separation, so it
+#'        underestimates UCI by an amount that depends on the shape of the
+#'        area. `"bootstrap"` simulates 20000 random distributions of
+#'        activities along the border and uses the largest spatial separation
+#'        found; it gets closer to the maximum than the heuristic but does not
+#'        reach it either. The last two are kept so that results of previous
+#'        versions can be reproduced.
 #' @param showProgress A `logical`. If `TRUE` (Default) and the session is
 #'        interactive, `uci()` reports the progress of each step, with a
 #'        progress bar for the spatial separation on large grids. It also
@@ -52,6 +67,12 @@
 #'        `"spatial_link"` distances be used in areas with islands. Defaults
 #'        to `FALSE`. See [remove_islands()].
 #'
+#' @return A one-row `data.frame` with the columns `UCI`, `location_coef`
+#'         (LC), `spatial_separation` (the Venables index V of the observed
+#'         distribution) and `spatial_separation_max` (its maximum for the
+#'         study area, as found by `max_method`), so that
+#'         `UCI = LC * (1 - V / V_max)`.
+#'
 #' @family urban centrality index
 #'
 #' @examples
@@ -63,20 +84,21 @@
 #' df <- uci(
 #'         sf_object = grid,
 #'         var_name = 'jobs',
-#'         dist_type = "euclidean",
-#'         bootstrap_border = FALSE
+#'         dist_type = "euclidean"
 #'         )
 #' head(df)
-#' 
-#' # calculate UCI with bootstrap
+#'
+#' \donttest{
+#' # calculate UCI with the bootstrap approach to the maximum spatial separation
 #' df2 <- uci(
 #'         sf_object = grid,
 #'         var_name = 'jobs',
 #'         dist_type = "euclidean",
-#'         bootstrap_border = TRUE,
+#'         max_method = "bootstrap",
 #'         showProgress = TRUE
 #'         )
 #' head(df2)
+#' }
 #' @export
 uci <- function(sf_object, 
                 var_name, 
@@ -84,7 +106,8 @@ uci <- function(sf_object,
                 bootstrap_border = FALSE,
                 showProgress = TRUE,
                 parallel = FALSE,
-                remove_islands = FALSE){
+                remove_islands = FALSE,
+                max_method = NULL){
 
   # check inputs
   abort_if_invalid(checkmate::check_class(sf_object, 'sf'), "sf_object")
@@ -116,6 +139,20 @@ uci <- function(sf_object,
   abort_if_invalid(
     checkmate::check_choice(dist_type, c('spatial_link', 'euclidean')),
     "dist_type"
+  )
+  # bootstrap_border is deprecated: an explicit max_method wins over it
+  if (isTRUE(bootstrap_border)) {
+    cli::cli_warn(
+      "{.arg bootstrap_border} is deprecated; use
+       {.code max_method = \"bootstrap\"} instead."
+    )
+  }
+  if (is.null(max_method)) {
+    max_method <- if (isTRUE(bootstrap_border)) "bootstrap" else "exact"
+  }
+  abort_if_invalid(
+    checkmate::check_choice(max_method, c('exact', 'heuristic', 'bootstrap')),
+    "max_method"
   )
 
   # progress steps and bar only in interactive sessions (not knitr/testthat)
@@ -151,6 +188,9 @@ uci <- function(sf_object,
                                 showProgress = showProgress)
     islands_removed <- nrow(sf_object) < n_before
   }
+  if (nrow(sf_object) < 2) {
+    cli::cli_abort("{.arg sf_object} must have at least two polygons.")
+  }
 
   ###### observed Location Coefficient -----------------------------------------
   
@@ -180,44 +220,39 @@ uci <- function(sf_object,
   
   
   ###### observed Venables -----------------------------------------------------
-  
+
+  # self distance of every cell, and the non-empty cells
+  self_all <- get_self_distance(sf_object)
+  keep <- which(var > 0)
+  var_x_norm <- normalize_distribution(var[keep])
+  self <- self_all[keep]
+
   if (dist_type == 'euclidean') {
-    
-    # keep non-empty cells
-    sf_object_observed <- sf_object[ var > 0, var_name]
-    # plot(sf_object_observed['job_count'])
 
-    # normalize distribution of variable
-    var_x_norm <- normalize_distribution( var[var > 0] )
-
-    # distances between centroids
-    coords <- get_centroid_coords(sf_object_observed)
-    self <- get_self_distance(sf_object_observed)
-    dist_fun <- function(rows) {
-      fields::rdist(coords[rows, , drop = FALSE], coords)
+    # distances between centroids. dist_pairs() has a zero diagonal
+    coords <- get_centroid_coords(sf_object)
+    dist_pairs <- function(from, to) {
+      fields::rdist(coords[from, , drop = FALSE], coords[to, , drop = FALSE])
     }
 
   } else if (dist_type == 'spatial_link') {
     # plot(sf_object['jobs'])
 
-    # normalize distribution of variable
-    var_x_norm <- normalize_distribution( var )
-
-    # shortest-path distances along spatial links, between non-empty cells
+    # shortest-path distances along spatial links
     if (show_steps) {
       cli::cli_progress_step("Building spatial links between polygons")
     }
     graph <- get_spatial_link_graph(sf_object)
-    keep <- which(var_x_norm > 0)
-    var_x_norm <- var_x_norm[keep]
-    self <- get_self_distance(sf_object)[keep]
-    dist_fun <- function(rows) {
-      cppRouting::get_distance_matrix(Graph = graph,
-                                      from = keep[rows],
-                                      to = keep,
-                                      algorithm = 'mch')
+    dist_pairs <- function(from, to) {
+      d <- cppRouting::get_distance_matrix(Graph = graph,
+                                           from = from,
+                                           to = to,
+                                           algorithm = 'mch')
+      # rows and columns in the order asked for
+      d[as.character(from), as.character(to), drop = FALSE]
     }
   }
+  dist_fun <- function(rows) dist_pairs(keep[rows], keep)
 
   # Spatial separation index (venables), plus the self distance
   if (show_steps) cli::cli_progress_step("Computing spatial separation")
@@ -242,15 +277,26 @@ uci <- function(sf_object,
   # keep only cells on the border
   sf_border <- subset(sf_object, border == 1)
   # plot(sf_border['border'])
-  
-  # Distance matrix between border cells
-  if (dist_type == 'euclidean') {
-    
+
+  ### EXACT max venables: search over the border cells, checked against the
+  # other cells (see max_venables_exact())
+  if (max_method == 'exact') {
+    exact <- max_venables_exact(cand = which(border == 1),
+                                n = nrow(sf_object),
+                                dist_pairs = dist_pairs,
+                                self = self_all)
+    max_venables <- exact$v_max
+  }
+
+  # Distance matrix between border cells, with the self distance on the
+  # diagonal (heuristic and bootstrap)
+  if (max_method != 'exact' && dist_type == 'euclidean') {
+
     # calculate distance matrix
     distance_border <- get_euclidean_dist_matrix(sf_border)
-  
-    } else if (dist_type == 'spatial_link') {
-    
+
+    } else if (max_method != 'exact' && dist_type == 'spatial_link') {
+
       # find positions of cells in the border
       border_positions <- which(sf_object$border == 1, arr.ind=TRUE)
 
@@ -268,12 +314,12 @@ uci <- function(sf_object,
 
   ### HEURISTIC max venables considering full border
   # with activities equally spread along the border, b'Db is the mean distance
-  if (isFALSE(bootstrap_border)) {
+  if (max_method == 'heuristic') {
     max_venables <- mean(distance_border)
   }
-  
+
   ### bootstrap simulations to find max venables
-  if (isTRUE(bootstrap_border)) {
+  if (max_method == 'bootstrap') {
     
     # input for number of simulations
     # 2 to 51 sampled border cells (with replacement), 400 draws each (20,000

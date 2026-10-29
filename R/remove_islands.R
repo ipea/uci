@@ -28,7 +28,8 @@
 #' @examples
 #' # load data
 #' data_dir <- system.file("extdata", package = "uci")
-#' grid <- readRDS(file.path(data_dir, "grid_bho.rds"))
+#' # sf::st_as_sf() loads {sf}, whose methods subset and bind sf objects
+#' grid <- sf::st_as_sf(readRDS(file.path(data_dir, "grid_bho.rds")))
 #'
 #' # add an island: a copy of the first cell, shifted away from the grid
 #' island <- grid[1, ]

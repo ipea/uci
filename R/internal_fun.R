@@ -118,6 +118,110 @@ get_spatial_link_graph <- function(sf_object) {
   return(graph)
   }
 
+# maximum of b'Db over the simplex (b >= 0, sum(b) = 1) by replicator
+# dynamics b <- b * (Db) / (b'Db): b'Db never decreases (Baum & Eagon 1967)
+# and the limit satisfies the KKT conditions, gap = max(Db) - b'Db = 0. For
+# a Euclidean D with zero diagonal the objective is concave on the simplex
+# (Schoenberg 1938: Euclidean distance matrices are conditionally negative
+# definite), so the KKT point is the global maximum and the true maximum is
+# at most v + 2 * gap
+#' @keywords internal
+venables_max <- function(D, b = rep(1 / nrow(D), nrow(D))) {
+  tol <- 1e-6      # relative gap: V_max within 2e-6 of the KKT value
+  max_iter <- 1e5L
+  prune <- 1e-12   # cells with b < prune * max(b) leave the iteration
+  n <- nrow(D)
+  active <- seq_len(n)
+  D_a <- D
+  Db <- as.vector(D_a %*% b)
+  v <- sum(b * Db)
+  for (i in seq_len(max_iter)) {
+    if (v == 0 || max(Db) - v <= tol * v) break
+    b <- b * Db / v
+    # cells that have decayed to nothing are dropped; the certificate below
+    # is computed on all cells, so a wrong drop shows up as non-convergence
+    small <- b < prune * max(b)
+    if (any(small)) {
+      active <- active[!small]
+      b <- b[!small] / sum(b[!small])
+      D_a <- D_a[!small, !small, drop = FALSE]
+    }
+    Db <- as.vector(D_a %*% b)
+    v <- sum(b * Db)
+  }
+  # certificate on all cells
+  weights <- numeric(n)
+  weights[active] <- b
+  Db <- as.vector(D %*% weights)
+  v <- sum(weights * Db)
+  gap <- max(Db) - v
+  return(list(v_max = v, weights = weights, gap = gap,
+              converged = gap <= tol * v, iterations = i))
+}
+
+# exact maximum spatial separation. cand are the candidate cells (the
+# border), n the number of cells, dist_pairs(from, to) the zero-diagonal
+# distance matrix between two sets of cells and self the self distance of
+# every cell. The search runs on the zero-diagonal matrix (concave for
+# Euclidean distances), is polished on the matrix with the self distance
+# (the functional of the observed V), and the result is checked against the
+# cells outside cand: any cell that would raise b'Db is added and the search
+# repeated once. Activities on one or two cells are covered in closed form,
+# as the search can miss them on coarse grids
+#' @keywords internal
+max_venables_exact <- function(cand, n, dist_pairs, self) {
+  tol <- 1e-6
+  for (pass in 1:2) {
+    D0 <- dist_pairs(cand, cand)
+    sol0 <- venables_max(D0)
+    sol <- venables_max(D0 + diag(self[cand], nrow = length(cand)),
+                        b = sol0$weights)
+    sol$converged <- sol$converged && sol0$converged
+    other <- setdiff(seq_len(n), cand)
+    violators <- integer(0)
+    if (length(other) > 0) {
+      busy <- sol$weights > 1e-12
+      Db_other <- dist_pairs(other, cand[busy]) %*% sol$weights[busy]
+      violators <- other[as.vector(Db_other) > sol$v_max * (1 + tol)]
+    }
+    # cand, D0 and sol must describe the same set after the loop
+    if (length(violators) == 0 || pass == 2) break
+    cand <- c(cand, violators)
+  }
+  if (length(violators) > 0) {
+    cli::cli_warn(
+      "{length(violators)} polygon{?s} outside the border would raise the
+       maximum spatial separation; {.field spatial_separation_max} may be
+       underestimated."
+    )
+  }
+  if (!sol$converged) {
+    cli::cli_warn(
+      "The search for the maximum spatial separation did not converge;
+       {.field spatial_separation_max} may be underestimated."
+    )
+  }
+
+  # all activity in one cell, or split between two cells with the weight a
+  # that maximises 2a(1-a)d + a^2 s_i + (1-a)^2 s_j
+  best <- max(self)
+  if (length(cand) >= 2) {
+    s_i <- matrix(self[cand], length(cand), length(cand))
+    s_j <- t(s_i)
+    denom <- 2 * D0 - s_i - s_j
+    # any a in [0, 1] is feasible, so the test only avoids 0 / 0
+    a <- ifelse(denom != 0, (D0 - s_j) / denom, 0.5)
+    a <- pmin(pmax(a, 0), 1)
+    # when 2d < s_i + s_j the pair maximum is an endpoint, covered by best
+    f <- 2 * a * (1 - a) * D0 + a^2 * s_i + (1 - a)^2 * s_j
+    best <- max(best, f[upper.tri(f)])
+  }
+  return(list(v_max = max(sol$v_max, best), search = sol$v_max,
+              small_support = best, gap = sol$gap, converged = sol$converged,
+              iterations = sol$iterations, rounds = pass,
+              violators = length(violators)))
+}
+
 # normalize distribution of variable
 #' @keywords internal
 normalize_distribution <- function(vec) {

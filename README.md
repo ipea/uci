@@ -56,13 +56,12 @@ head(grid)
 df <- uci(
        sf_object = grid,
        var_name = 'jobs',
-       bootstrap_border = FALSE,
        showProgress = TRUE
        )
 
 head(df)
 #>         UCI location_coef spatial_separation spatial_separation_max
-#> 1 0.2538635     0.5278007           3880.114               7475.899
+#> 1 0.2612105     0.5278007           3880.114               7681.927
 
 ```
 

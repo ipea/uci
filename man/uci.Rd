@@ -13,11 +13,13 @@ uci(
   bootstrap_border = FALSE,
   showProgress = TRUE,
   parallel = FALSE,
-  remove_islands = FALSE
+  remove_islands = FALSE,
+  max_method = NULL
 )
 }
 \arguments{
-\item{sf_object}{A \verb{POLYGON sf data.frame} of the study area. Distances and
+\item{sf_object}{A \verb{POLYGON sf data.frame} of the study area, with at
+least two polygons. Distances and
 areas are computed in EPSG:3857 (Web Mercator), which distorts very
 large regions.}
 
@@ -34,18 +36,9 @@ spatial neighbor links. In the case of areas with a concave shape
 distances (even though they are computationally more costly) because
 simple Euclidean distances can bias UCI estimates in those cases.}
 
-\item{bootstrap_border}{A \code{logical}. The calculation of UCI requires one to
-find the maximum value of the Venables spatial separation index of the
-study area. If \code{bootstrap_border = FALSE} (Default), the function uses
-a heuristic approach that assumes that the max spatial separation
-would occur when all activities were equally distributed along the
-border of the study  area. This is a fast approach, but it does not
-reach the maximum spatial separation. Alternatively, if \code{bootstrap_border = TRUE},
-the function uses a bootstrap approach that simulates 20000 random
-distributions of activities along the border and uses the max spatial
-separation found. This approach is more computationally expensive and
-although it might not return the maximum theoretical value of spatial
-separation, it is probably very close to it.}
+\item{bootstrap_border}{A \code{logical}. Deprecated, use
+\code{max_method = "bootstrap"}. If \code{TRUE} and \code{max_method} is \code{NULL},
+the bootstrap is used; an explicit \code{max_method} takes precedence.}
 
 \item{showProgress}{A \code{logical}. If \code{TRUE} (Default) and the session is
 interactive, \code{uci()} reports the progress of each step, with a
@@ -68,6 +61,37 @@ outside it, along with their activities, are dropped before any
 calculation. This applies to both \code{dist_type}s, and it lets
 \code{"spatial_link"} distances be used in areas with islands. Defaults
 to \code{FALSE}. See \code{\link[=remove_islands]{remove_islands()}}.}
+
+\item{max_method}{A \code{string}, or \code{NULL} (Default), which means \code{"exact"}
+unless \code{bootstrap_border = TRUE}. How to find the maximum value of
+the Venables spatial separation index that the study area admits
+(\code{spatial_separation_max}), which normalises the index. \code{"exact"}
+searches for the distribution of activities among the
+border polygons that maximises the spatial separation. The search
+is done on the distances between polygon centroids, where the
+maximum is global for Euclidean distances, and the result is then
+refined with the self distance of each polygon included in the
+distances, so that it is a stationary point of the same quantity as
+\code{spatial_separation}. UCI is 0 (up to the solver tolerance) when the
+activities sit on that maximising configuration. With
+\code{"spatial_link"} distances the same procedure gives a stationary
+point. \code{"heuristic"} is the approach of Pereira et al. (2013),
+which assumes that the maximum occurs when all activities are
+equally distributed along the border of the study area. It is fast,
+but it does not reach the maximum spatial separation, so it
+underestimates UCI by an amount that depends on the shape of the
+area. \code{"bootstrap"} simulates 20000 random distributions of
+activities along the border and uses the largest spatial separation
+found; it gets closer to the maximum than the heuristic but does not
+reach it either. The last two are kept so that results of previous
+versions can be reproduced.}
+}
+\value{
+A one-row \code{data.frame} with the columns \code{UCI}, \code{location_coef}
+(LC), \code{spatial_separation} (the Venables index V of the observed
+distribution) and \code{spatial_separation_max} (its maximum for the
+study area, as found by \code{max_method}), so that
+\code{UCI = LC * (1 - V / V_max)}.
 }
 \description{
 Calculates the Urban Centrality Index (UCI) as in Pereira et al., (2013) \doi{10.1111/gean.12002}.
@@ -93,20 +117,21 @@ grid <- readRDS(file.path(data_dir, "grid_bho.rds"))
 df <- uci(
         sf_object = grid,
         var_name = 'jobs',
-        dist_type = "euclidean",
-        bootstrap_border = FALSE
+        dist_type = "euclidean"
         )
 head(df)
 
-# calculate UCI with bootstrap
+\donttest{
+# calculate UCI with the bootstrap approach to the maximum spatial separation
 df2 <- uci(
         sf_object = grid,
         var_name = 'jobs',
         dist_type = "euclidean",
-        bootstrap_border = TRUE,
+        max_method = "bootstrap",
         showProgress = TRUE
         )
 head(df2)
+}
 }
 \seealso{
 Useful links:
