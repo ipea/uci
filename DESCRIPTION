@@ -41,4 +41,4 @@ Encoding: UTF-8
 Config/testthat/edition: 3
 NeedsCompilation: no
 Roxygen: list(markdown = TRUE)
-Config/roxygen2/version: 8.1.0
+Config/roxygen2/version: 8.1.1

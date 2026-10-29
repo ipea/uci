@@ -17,7 +17,7 @@ knitr::opts_chunk$set(
 use_suggested_pkgs <- requireNamespace("ggplot2", quietly = TRUE)
 ```
 
-**uci** is an `R` package to measure the centrality of cities and regions. The package implements the Urban Centrality Index (UCI) originally proposed by @pereira2013urbancentrality. UCI measures the extent to which the spatial organization of a city varies from extreme monocentric to extreme polycentric in a continuous scale, rather than considering a binary classification (*either* monocentric *or* polycentric). UCI values range from 0 to 1. Values closer to 0 indicate more polycentric patterns and values closer to 1 indicate a more monocentric urban form.
+**uci** is an `R` package to measure the centrality of cities and regions. The package implements the Urban Centrality Index (UCI) originally proposed by @pereira2013urbancentrality. UCI measures the extent to which the spatial organization of a city varies from monocentric to polycentric in a continuous scale, rather than considering a binary classification (*either* monocentric *or* polycentric). UCI values range from 0 to 1. Values closer to 0 indicate more polycentric patterns and values closer to 1 indicate a more monocentric urban form.
 
 
 # Installation
@@ -74,7 +74,7 @@ ggplot(data = grid) +
 
 ## Calculating UCI
 
-In the example below, we calculate how mono/polycentric our study area is considering its spatial distribution of jobs.
+In the example below, we calculate how mono/polycentric our study area is considering its spatial distribution of jobs considering Euclidian distances between polygons.
  
 ```{r, eval = TRUE}
 df <- uci(
@@ -83,7 +83,7 @@ df <- uci(
   dist_type = 'euclidean'
   )
 
-head(df)
+df
 ```
 
 By default, the `uci()` function uses Euclidean distances between polygons. However, Euclidean distances can lead to misleading results in the case of areas with a concave shape (like a bay). In these cases, it is strongly recommended to use `dist_type = 'spatial_link'`. These spatial link distances consider Euclidean distances along the links of spatial neighbour links. This is a bit more costly computationally speaking, but it does return more realistic results. 
@@ -97,10 +97,12 @@ df <- uci(
   dist_type = 'spatial_link'
   )
 
-head(df)
+df
 ```
 
-The package also includes a larger and more irregular sample data set, `grid_rio.rds`. It covers the municipality of Rio de Janeiro, Brazil, with a concave outline around the Guanabara and Sepetiba bays and several islands, including single isolated cells. The data comes from the [Access to Opportunities Project](https://www.ipea.gov.br/acessooportunidades/en/) (AOP, Ipea, 2019), aggregated to H3 resolution 8. Because of its islands, the full grid only works with `dist_type = 'euclidean'`:
+Where there are no bridges or roads connecting isolated polygons, we can remove them by passing the arugment `remove_islands = TRUE`. Let's see this in another example data set using the city of Rio de Janeiro, Brazil.
+
+The `grid_rio.rds` data set covers the municipality of Rio, with a concave outline around the Guanabara and Sepetiba bays and several islands, including single isolated cells. The data comes from the [Access to Opportunities Project](https://www.ipea.gov.br/acessooportunidades/en/) (AOP, Ipea, 2019), aggregated to H3 resolution 8.
 
 ```{r, eval = TRUE}
 grid_rio <- readRDS(file.path(data_dir, "grid_rio.rds"))
@@ -114,7 +116,7 @@ ggplot(data = grid_rio) +
 
 ```
 
-As you can see, the case of Rio include a few islands disconnected from mainland. In this case, the user has two options. One of them is using `dist_type = 'euclidean'`. 
+As you can see, the case of Rio include a few islands disconnected from mainland. Because of these islands, we can only consider the full grid in the calculation of UCI if we use `dist_type = 'euclidean'`.
 
 ```{r, eval = TRUE}
 

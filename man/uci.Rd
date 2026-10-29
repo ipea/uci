@@ -19,9 +19,8 @@ uci(
 }
 \arguments{
 \item{sf_object}{A \verb{POLYGON sf data.frame} of the study area, with at
-least two polygons. Distances and
-areas are computed in EPSG:3857 (Web Mercator), which distorts very
-large regions.}
+least two polygons. Distances and areas are computed in EPSG:3857
+(Web Mercator), which distorts very large regions.}
 
 \item{var_name}{A \code{string}. The name of the column in \code{sf_object} with the
 number of activities/opportunities/resources/services to be considered
@@ -54,13 +53,12 @@ they are computed in parallel using the
 number of threads set by \{RcppParallel\} (all available cores by
 default, see \code{RcppParallel::setThreadOptions()}).}
 
-\item{remove_islands}{A \code{logical}. If \code{TRUE}, only the largest group of
-neighbouring polygons (queen contiguity), i.e. the one with the most
-polygons, is kept, and polygons
-outside it, along with their activities, are dropped before any
-calculation. This applies to both \code{dist_type}s, and it lets
-\code{"spatial_link"} distances be used in areas with islands. Defaults
-to \code{FALSE}. See \code{\link[=remove_islands]{remove_islands()}}.}
+\item{remove_islands}{A \code{logical}. Defaults to \code{FALSE}. If \code{TRUE}, only the
+largest group of neighbouring polygons (queen contiguity), i.e. the
+one with the most polygons, is kept, and polygons outside it, along
+with their activities, are dropped before any calculation. When there
+are isolated islands, \code{"spatial_link"} distances only works with
+\code{remove_islands = TRUE}. Defaults to \code{FALSE}. See \code{\link[=remove_islands]{remove_islands()}}.}
 
 \item{max_method}{A \code{string}, or \code{NULL} (Default), which means \code{"exact"}
 unless \code{bootstrap_border = TRUE}. How to find the maximum value of
@@ -83,8 +81,8 @@ underestimates UCI by an amount that depends on the shape of the
 area. \code{"bootstrap"} simulates 20000 random distributions of
 activities along the border and uses the largest spatial separation
 found; it gets closer to the maximum than the heuristic but does not
-reach it either. The last two are kept so that results of previous
-versions can be reproduced.}
+reach it either. Options \code{"heuristic"} and \code{"bootstrap"} two are kept
+so that results of previous versions can be reproduced.}
 }
 \value{
 A one-row \code{data.frame} with the columns \code{UCI}, \code{location_coef}
@@ -117,21 +115,11 @@ grid <- readRDS(file.path(data_dir, "grid_bho.rds"))
 df <- uci(
         sf_object = grid,
         var_name = 'jobs',
-        dist_type = "euclidean"
+        dist_type = "spatial_link"
         )
+
 head(df)
 
-\donttest{
-# calculate UCI with the bootstrap approach to the maximum spatial separation
-df2 <- uci(
-        sf_object = grid,
-        var_name = 'jobs',
-        dist_type = "euclidean",
-        max_method = "bootstrap",
-        showProgress = TRUE
-        )
-head(df2)
-}
 }
 \seealso{
 Useful links:
