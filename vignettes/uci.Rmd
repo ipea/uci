@@ -13,6 +13,8 @@ knitr::opts_chunk$set(
   collapse = TRUE,
   comment = "#>"
 )
+
+use_suggested_pkgs <- requireNamespace("ggplot2", quietly = TRUE)
 ```
 
 **uci** is an `R` package to measure the centrality of cities and regions. The package implements the Urban Centrality Index (UCI) originally proposed by @pereira2013urbancentrality. UCI measures the extent to which the spatial organization of a city varies from extreme monocentric to extreme polycentric in a continuous scale, rather than considering a binary classification (*either* monocentric *or* polycentric). UCI values range from 0 to 1. Values closer to 0 indicate more polycentric patterns and values closer to 1 indicate a more monocentric urban form.
@@ -37,8 +39,10 @@ First, let's load a few libraries we'll be using in this vignette.
 ```{r, eval = TRUE, message = FALSE, warning = FALSE}
 library(uci)
 library(sf)
-library(ggplot2)
+```
 
+```{r, eval = use_suggested_pkgs, message = FALSE, warning = FALSE}
+library(ggplot2)
 ```
 
 ## Data input
@@ -100,7 +104,9 @@ The package also includes a larger and more irregular sample data set, `grid_rio
 
 ```{r, eval = TRUE}
 grid_rio <- readRDS(file.path(data_dir, "grid_rio.rds"))
+```
 
+```{r, eval = use_suggested_pkgs, out.width = "80%", fig.width = 6, fig.height = 6}
 ggplot(data = grid_rio) +
   geom_sf(aes(fill = jobs), color = NA) +
   scale_fill_viridis_c() +

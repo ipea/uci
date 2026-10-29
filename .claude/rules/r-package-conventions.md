@@ -63,8 +63,11 @@ conflict, Part A wins; flag the conflict in the plan.
   its previous value, or unset if it was unset.
 - **`parallel = TRUE` changes nothing:** cppRouting then uses
   RcppParallel's default or the user's own `RcppParallel::setThreadOptions()`.
-  `showProgress` no longer shows a progress bar; its only effect is the
-  `remove_islands` message.
+- **`showProgress`:** gates `cli::cli_progress_step()` phase messages and the
+  row-block bar in `venables_blockwise(progress =)`, only when
+  `rlang::is_interactive()` (quiet under knitr, testthat, Rscript, CRAN); it
+  also gates the `remove_islands` message (not interactive-gated). Tests
+  use `rlang::local_interactive(TRUE)`.
 
 ## A3. Numerical discipline (the core of this package)
 

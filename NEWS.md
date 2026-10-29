@@ -8,7 +8,7 @@
   * New argument `remove_islands` in `uci()`. If `TRUE`, only the largest group of neighbouring polygons is kept, so `dist_type = "spatial_link"` can be used in areas with islands. Polygons outside that group, and their activities, are dropped from the calculation, and a message reports how many (when `showProgress = TRUE`).
   * New sample data set `inst/extdata/grid_rio.rds`: a hexagonal grid of Rio de Janeiro with a concave outline, islands and isolated cells, based on data from the Access to Opportunities Project (Ipea, 2019).
   * `uci()` now raises informative errors when `var_name` has negative, infinite or non-numeric values, when all its values are 0 or `NA`, and, with `dist_type = "spatial_link"`, when the polygons don't form one contiguous area. These cases previously returned `NaN`/`NA` or a cryptic error from {spdep}.
-  * `showProgress` is kept for backward compatibility but no longer shows a progress bar.
+  * With `showProgress = TRUE`, `uci()` now reports the progress of each step with {cli}, plus a progress bar for the spatial separation on large grids. These progress messages appear only in interactive sessions, so knitted documents, scripts and tests don't show them; the `remove_islands` message is still controlled by `showProgress` alone. The old {pbapply}/{furrr} progress bar of the bootstrap is gone, as the bootstrap now takes well under a second.
   * {furrr}, {future} and {pbapply} are no longer dependencies.
   * Errors are now raised with {cli}: messages are reworded and formatted, and have class `rlang_error`. An all-`NA` `var_name` column now gives the informative "0 or NA" error instead of a {data.table} type error. {cli} and {rlang} are new dependencies.
 

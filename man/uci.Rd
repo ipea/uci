@@ -47,10 +47,11 @@ separation found. This approach is more computationally expensive and
 although it might not return the maximum theoretical value of spatial
 separation, it is probably very close to it.}
 
-\item{showProgress}{A \code{logical}. If \code{TRUE} (Default), \code{uci()} reports how
-many polygons were removed by \code{remove_islands}. It no longer shows a
-progress bar, because the bootstrap simulation is now fast enough not
-to need one.}
+\item{showProgress}{A \code{logical}. If \code{TRUE} (Default) and the session is
+interactive, \code{uci()} reports the progress of each step, with a
+progress bar for the spatial separation on large grids. It also
+controls the message on how many polygons were removed by
+\code{remove_islands}.}
 
 \item{parallel}{A \code{logical}. Only used when \code{dist_type = "spatial_link"}.
 If \code{FALSE} (Default), shortest-path distances are computed on a

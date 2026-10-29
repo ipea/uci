@@ -19,17 +19,21 @@ location_coef <- function(x){
 # Venables, Spatial Separation index, b' D b
 # D is built in blocks of rows, so the n x n distance matrix is never held in
 # memory at once. dist_fun(rows) returns the distances between `rows` and all
-# cells, without the self-distance (diagonal), which the caller adds
+# cells, without the self-distance (diagonal), which the caller adds.
+# progress = TRUE draws a cli bar over the blocks (shown after 2 s)
 #' @keywords internal
-venables_blockwise <- function(b, dist_fun, block_rows = NULL) {
+venables_blockwise <- function(b, dist_fun, block_rows = NULL,
+                               progress = FALSE) {
 
   n <- length(b)
   if (is.null(block_rows)) block_rows <- max(1, floor(1e7 / n)) # ~80 MB
   blocks <- split(seq_len(n), ceiling(seq_len(n) / block_rows))
 
+  # cli only draws the bar if the loop takes longer than 2 s
+  idx <- if (progress) cli::cli_progress_along(blocks) else seq_along(blocks)
   v <- 0
-  for (rows in blocks) {
-    v <- v + sum(b[rows] * (dist_fun(rows) %*% b))
+  for (i in idx) {
+    v <- v + sum(b[blocks[[i]]] * (dist_fun(blocks[[i]]) %*% b))
   }
   return(v)
 }

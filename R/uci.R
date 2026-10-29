@@ -32,10 +32,11 @@
 #'        separation found. This approach is more computationally expensive and
 #'        although it might not return the maximum theoretical value of spatial
 #'        separation, it is probably very close to it.
-#' @param showProgress A `logical`. If `TRUE` (Default), `uci()` reports how
-#'        many polygons were removed by `remove_islands`. It no longer shows a
-#'        progress bar, because the bootstrap simulation is now fast enough not
-#'        to need one.
+#' @param showProgress A `logical`. If `TRUE` (Default) and the session is
+#'        interactive, `uci()` reports the progress of each step, with a
+#'        progress bar for the spatial separation on large grids. It also
+#'        controls the message on how many polygons were removed by
+#'        `remove_islands`.
 #' @param parallel A `logical`. Only used when `dist_type = "spatial_link"`.
 #'        If `FALSE` (Default), shortest-path distances are computed on a
 #'        single thread (any thread setting made with
@@ -116,11 +117,16 @@ uci <- function(sf_object,
     checkmate::check_choice(dist_type, c('spatial_link', 'euclidean')),
     "dist_type"
   )
+
+  # progress steps and bar only in interactive sessions (not knitr/testthat)
+  show_steps <- showProgress && rlang::is_interactive()
   
   # config parallel computing: shortest paths (cppRouting) run on
   # RcppParallel, which reads RCPP_PARALLEL_NUM_THREADS on every call
   if (dist_type == 'spatial_link' && isFALSE(parallel)) {
     threads_original <- Sys.getenv("RCPP_PARALLEL_NUM_THREADS", NA)
+    # cli closes the open progress step via its own exit handler: keep
+    # add = TRUE in every on.exit() of uci()
     on.exit(
       if (is.na(threads_original)) {
         Sys.unsetenv("RCPP_PARALLEL_NUM_THREADS")
@@ -213,6 +219,9 @@ uci <- function(sf_object,
     var_x_norm <- normalize_distribution( var )
 
     # shortest-path distances along spatial links, between non-empty cells
+    if (show_steps) {
+      cli::cli_progress_step("Building spatial links between polygons")
+    }
     graph <- get_spatial_link_graph(sf_object)
     keep <- which(var_x_norm > 0)
     var_x_norm <- var_x_norm[keep]
@@ -226,12 +235,16 @@ uci <- function(sf_object,
   }
 
   # Spatial separation index (venables), plus the self distance
-  v_observed <- venables_blockwise(var_x_norm, dist_fun) +
+  if (show_steps) cli::cli_progress_step("Computing spatial separation")
+  v_observed <- venables_blockwise(var_x_norm, dist_fun,
+                                   progress = show_steps) +
     sum(var_x_norm^2 * self)
   
   
   ###### Find MAX venables spatial separation ----------------------------------
   
+  if (show_steps) cli::cli_progress_step("Computing maximum spatial separation")
+
   # get perimeter of whole area
   boundary <- sf::st_boundary( sf::st_union(sf_object) )
   
@@ -290,6 +303,10 @@ uci <- function(sf_object,
     # each simulation spreads activities equally among k randomly sampled
     # border cells, so b'Db is the mean distance among the (unique) busy cells
     n_border <- nrow(distance_border)
+    if (show_steps) {
+      n_sim <- prettyNum(length(all_sim_input), big.mark = ",")
+      cli::cli_progress_step("Simulating {n_sim} border configurations")
+    }
     all_sim_venables <- vapply(
       X = all_sim_input,
       FUN = function(k) {

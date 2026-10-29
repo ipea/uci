@@ -163,6 +163,29 @@ test_that("does not change the input", {
 
 
 
+test_that("progress is reported only in interactive sessions", {
+
+  # testthat runs non-interactively
+  testthat::expect_no_message(tester())
+
+  rlang::local_interactive(TRUE)
+  msgs <- testthat::capture_messages(tester())
+  testthat::expect_match(msgs, "Computing spatial separation", all = FALSE)
+  testthat::expect_match(msgs, "maximum spatial separation", all = FALSE)
+  testthat::expect_no_message(tester(showProgress = FALSE))
+
+  # slow paths
+  testthat::skip_on_cran()
+  msgs <- testthat::capture_messages(
+    tester(dist_type = 'spatial_link', bootstrap_border = TRUE)
+  )
+  testthat::expect_match(msgs, "Building spatial links", all = FALSE)
+  testthat::expect_match(msgs, "20,000 border configurations", all = FALSE)
+
+})
+
+
+
 # ERRORS and messages  -----------------------
 test_that("raises errors due to incorrect input", {
 
