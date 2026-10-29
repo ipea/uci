@@ -140,6 +140,8 @@ df <- uci(
 df
 ```
 
+To see which polygons are dropped before calculating UCI, use the function `remove_islands()`. It returns the `sf` object with only the largest group of neighbouring polygons, which you can map and then pass to `uci()`.
+
 
 ## Formal definition of UCI
 

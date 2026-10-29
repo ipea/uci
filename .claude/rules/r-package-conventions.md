@@ -42,14 +42,15 @@ conflict, Part A wins; flag the conflict in the plan.
 
 ## A2. The `uci()` contract
 
-- **Single export.** Signature: `uci(sf_object, var_name, dist_type =
+- **Two exports:** `uci()` and `remove_islands(sf_object, var_name = NULL,
+  showProgress = TRUE)`, which `uci(remove_islands = TRUE)` calls. Signature: `uci(sf_object, var_name, dist_type =
   "euclidean", bootstrap_border = FALSE, showProgress = TRUE, parallel =
   FALSE, remove_islands = FALSE)`. Argument names and order are public API: renaming or reordering
   needs a deprecation cycle and the maintainer's decision. (`showProgress` is
   camelCase for consistency with Ipea's other packages — don't "fix" it.)
 - **Inputs:** validated up front with `checkmate::check_*()` raised through
-  the internal `abort_if_invalid(res, arg)` (a cli error attributed to
-  `uci()`). Never `checkmate::assert_*` (it bypasses cli). New enumerated
+  the internal `abort_if_invalid(res, arg)` (a cli error attributed to the
+  calling export). Never `checkmate::assert_*` (it bypasses cli). New enumerated
   options: `checkmate::check_choice()`.
 - **Output:** a one-row `data.frame` with columns `UCI`, `location_coef`,
   `spatial_separation`, `spatial_separation_max`. Adding columns is a

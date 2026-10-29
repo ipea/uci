@@ -284,6 +284,65 @@ test_that("raises error for non-contiguous polygons with spatial_link", {
 
 })
 
+test_that("remove_islands() keeps the largest contiguous group", {
+
+  island <- grid[1, ]
+  sf::st_geometry(island) <- sf::st_geometry(island) + c(0.5, 0)
+  sf::st_crs(island) <- sf::st_crs(grid)
+  grid_island <- rbind(grid, island)
+
+  # drops the island cell only, without changing the input
+  grid_island2 <- grid_island
+  testthat::expect_message(
+    result <- remove_islands(grid_island2, var_name = 'jobs'),
+    "Removed 1 polygon (180 jobs) outside the largest contiguous area",
+    fixed = TRUE
+  )
+  testthat::expect_s3_class(result, "sf")
+  testthat::expect_identical(result, grid)
+  testthat::expect_identical(grid_island2, grid_island)
+
+  # messages
+  testthat::expect_message(
+    remove_islands(grid_island),
+    "Removed 1 polygon outside the largest contiguous area",
+    fixed = TRUE
+  )
+  grid_na <- grid_island
+  grid_na$jobs[nrow(grid_na)] <- NA
+  testthat::expect_message(
+    remove_islands(grid_na, var_name = 'jobs'),
+    "(0 jobs)",
+    fixed = TRUE
+  )
+  testthat::expect_no_message(
+    result <- remove_islands(grid_island, showProgress = FALSE)
+  )
+  testthat::expect_identical(result, grid)
+
+  # nothing to remove
+  testthat::expect_no_message(result <- remove_islands(grid, 'jobs'))
+  testthat::expect_identical(result, grid)
+  testthat::expect_identical(remove_islands(grid[1, ]), grid[1, ])
+  testthat::expect_identical(remove_islands(grid[0, ]), grid[0, ])
+
+  # contiguity is computed in the input CRS, which is kept
+  grid_island_3857 <- sf::st_transform(grid_island, 3857)
+  result <- suppressMessages(remove_islands(grid_island_3857))
+  testthat::expect_identical(sf::st_crs(result), sf::st_crs(3857))
+  testthat::expect_identical(nrow(result), nrow(grid))
+
+  # input errors
+  testthat::expect_error(remove_islands(1), class = "rlang_error")
+  testthat::expect_error(remove_islands(grid, var_name = 'banana'), "banana")
+  grid_chr <- grid
+  grid_chr$jobs <- as.character(grid_chr$jobs)
+  testthat::expect_error(remove_islands(grid_chr, var_name = 'jobs'),
+                         "numeric")
+  testthat::expect_error(remove_islands(grid, showProgress = 'banana'))
+
+})
+
 test_that("braces in user text are not interpolated in error messages", {
 
   grid_brace <- grid

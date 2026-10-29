@@ -67,7 +67,7 @@ polygons, is kept, and polygons
 outside it, along with their activities, are dropped before any
 calculation. This applies to both \code{dist_type}s, and it lets
 \code{"spatial_link"} distances be used in areas with islands. Defaults
-to \code{FALSE}.}
+to \code{FALSE}. See \code{\link[=remove_islands]{remove_islands()}}.}
 }
 \description{
 Calculates the Urban Centrality Index (UCI) as in Pereira et al., (2013) \doi{10.1111/gean.12002}.
@@ -116,6 +116,9 @@ Useful links:
   \item Report bugs at \url{https://github.com/ipea/uci/issues}
 }
 
+
+Other urban centrality index:
+\code{\link[=remove_islands]{remove_islands()}}
 }
 \author{
 \strong{Maintainer}: Rafael H. M. Pereira \email{rafa.pereira.br@gmail.com} (\href{https://orcid.org/0000-0003-2125-7465}{ORCID})

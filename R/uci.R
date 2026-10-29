@@ -50,7 +50,7 @@
 #'        outside it, along with their activities, are dropped before any
 #'        calculation. This applies to both `dist_type`s, and it lets
 #'        `"spatial_link"` distances be used in areas with islands. Defaults
-#'        to `FALSE`.
+#'        to `FALSE`. See [remove_islands()].
 #'
 #' @family urban centrality index
 #'
@@ -142,29 +142,14 @@ uci <- function(sf_object,
   # change projection to Web Mercator (EPSG:3857)
   sf_object <- suppressWarnings(sf::st_transform(sf_object, 3857))
 
-  # keep only the largest group of neighbouring polygons (if tied, the group
-  # of the earliest row: n.comp.nb numbers groups in row order)
-  # (spdep::poly2nb() fails on a single polygon, which has no islands anyway)
+  # keep only the largest group of neighbouring polygons
   islands_removed <- FALSE
-  if (isTRUE(remove_islands) && nrow(sf_object) > 1) {
-    nb <- suppressWarnings(
-      spdep::poly2nb(sf::st_geometry(sf_object), queen = TRUE)
-    )
-    comp <- spdep::n.comp.nb(nb)$comp.id
-    keep <- comp == which.max(table(comp))
-    if (!all(keep)) {
-      if (isTRUE(showProgress)) {
-        n_dropped <- prettyNum(
-          sum(sf_object[[var_name]][!keep], na.rm = TRUE), big.mark = ","
-        )
-        cli::cli_inform(
-          "Removed {sum(!keep)} polygon{?s} ({n_dropped} {.field {var_name}})
-           outside the largest contiguous area of {.arg sf_object}."
-        )
-      }
-      sf_object <- sf_object[keep, ]
-      islands_removed <- TRUE
-    }
+  if (isTRUE(remove_islands)) {
+    n_before <- nrow(sf_object)
+    # R skips non-function bindings in calls: this is remove_islands()
+    sf_object <- remove_islands(sf_object, var_name = var_name,
+                                showProgress = showProgress)
+    islands_removed <- nrow(sf_object) < n_before
   }
 
   ###### observed Location Coefficient -----------------------------------------
