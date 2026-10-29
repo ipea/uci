@@ -7,8 +7,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 <title>Urban Centrality Index • uci</title>
 <script src="deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-<link href="deps/bootstrap-5.3.1/bootstrap.min.css" rel="stylesheet">
-<script src="deps/bootstrap-5.3.1/bootstrap.bundle.min.js"></script><link href="deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet">
+<link href="deps/bootstrap-5.3.8/bootstrap.min.css" rel="stylesheet">
+<script src="deps/bootstrap-5.3.8/bootstrap.bundle.min.js"></script><link href="deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet">
 <link href="deps/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet">
 <script src="deps/headroom-0.11.0/headroom.min.js"></script><script src="deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="deps/search-1.0.0/fuse.min.js"></script><script src="deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="pkgdown.js"></script><meta property="og:title" content="Urban Centrality Index">
 <meta name="description" content="Calculates the Urban Centrality Index (UCI) as in Pereira et al., (2013) &lt;doi:10.1111/gean.12002&gt;. The UCI measures the extent to which the spatial organization of a city or region varies from extreme polycentric to extreme monocentric in a continuous scale from 0 to 1. Values closer to 0 indicate more polycentric patterns and values closer to 1 indicate a more monocentric urban form.">
@@ -22,7 +22,7 @@
 
     <a class="navbar-brand me-2" href="index.html">uci</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.1.9000</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -39,7 +39,7 @@
 <li class="nav-item"><form class="form-inline" role="search">
  <input class="form-control" type="search" name="search-input" id="search-input" autocomplete="off" aria-label="Search site" placeholder="Search for" data-search-index="search.json">
 </form></li>
-<li class="nav-item"><a class="external-link nav-link" href="https://github.com/ipeaGIT/uci/" aria-label="GitHub"><span class="fa fab fa-github fa-lg"></span></a></li>
+<li class="nav-item"><a class="external-link nav-link" href="https://github.com/ipea/uci/" aria-label="GitHub"><span class="fa fab fa-github fa-lg"></span></a></li>
       </ul>
 </div>
 
@@ -47,12 +47,12 @@
   </div>
 </nav><div class="container template-home">
 <div class="row">
-  <main id="main" class="col-md-9"><p><img align="right" src="https://github.com/ipeaGIT/uci/raw/main/man/figures/uci_hex.png" alt="ipea" width="250"></p>
+  <main id="main" class="col-md-9"><p><img align="right" src="https://github.com/ipea/uci/raw/main/man/figures/uci_hex.png" alt="ipea" width="250"></p>
 <div class="section level1">
 <div class="page-header"><h1 id="uci-urban-centrality-index">uci: Urban Centrality Index<a class="anchor" aria-label="anchor" href="#uci-urban-centrality-index"></a>
 </h1></div>
-<p><a href="https://CRAN.R-project.org/package=uci" class="external-link"><img src="https://www.r-pkg.org/badges/version/uci" alt="CRAN status"></a> <a href="https://CRAN.R-project.org/package=uci" class="external-link"><img src="https://cranlogs.r-pkg.org/badges/grand-total/uci?color=blue" alt="CRAN/METACRAN Total downloads"></a> <a href="https://github.com/ipeaGIT/uci/actions" class="external-link"><img src="https://github.com/ipeaGIT/uci/workflows/rcmdcheck/badge.svg" alt="R-CMD-check"></a> <a href="https://app.codecov.io/gh/ipeaGIT/uci?branch=main" class="external-link"><img src="https://codecov.io/gh/ipeaGIT/uci/branch/main/graph/badge.svg" alt="Codecov test coverage"></a> <a href="https://doi.org/10.1111/gean.12002" class="external-link"><img src="https://img.shields.io/badge/DOI-10.1111/gean.12002-blue" alt="DOI"></a> <a href="https://lifecycle.r-lib.org/articles/stages.html" class="external-link"><img src="https://img.shields.io/badge/lifecycle-experimental-orange.svg" alt="Lifecycle: experimental"></a></p>
-<p><strong>uci</strong> is an <code>R</code> package to calculate the Urban Centrality Index (UCI) originally proposed by Pereira et al., (2013). The UCI measures the extent to which the spatial organization of a city or region varies from extreme polycentric to extreme monocentric in a continuous scale from 0 to 1. Values close to 0 indicate more polycentric patterns and values close to 1 indicate a more monocentric urban form. More info on <a href="https://ipeagit.github.io/uci/articles/uci.html">this vignette</a>.</p>
+<p><a href="https://CRAN.R-project.org/package=uci" class="external-link"><img src="https://www.r-pkg.org/badges/version/uci" alt="CRAN status"></a> <a href="https://CRAN.R-project.org/package=uci" class="external-link"><img src="https://cranlogs.r-pkg.org/badges/grand-total/uci?color=blue" alt="CRAN/METACRAN Total downloads"></a> <a href="https://github.com/ipea/uci/actions" class="external-link"><img src="https://github.com/ipea/uci/actions/workflows/rcmdcheck.yaml/badge.svg" alt="R-CMD-check"></a> <a href="https://app.codecov.io/gh/ipea/uci?branch=main" class="external-link"><img src="https://codecov.io/gh/ipea/uci/branch/main/graph/badge.svg" alt="Codecov test coverage"></a> <a href="https://doi.org/10.1111/gean.12002" class="external-link"><img src="https://img.shields.io/badge/DOI-10.1111/gean.12002-blue" alt="DOI"></a> <a href="https://lifecycle.r-lib.org/articles/stages.html" class="external-link"><img src="https://img.shields.io/badge/lifecycle-experimental-orange.svg" alt="Lifecycle: experimental"></a></p>
+<p><strong>uci</strong> is an <code>R</code> package to calculate the Urban Centrality Index (UCI) originally proposed by Pereira et al., (2013). The UCI measures the extent to which the spatial organization of a city or region varies from extreme polycentric to extreme monocentric in a continuous scale from 0 to 1. Values close to 0 indicate more polycentric patterns and values close to 1 indicate a more monocentric urban form. More info on <a href="https://ipea.github.io/uci/articles/uci.html">this vignette</a>.</p>
 <ul>
 <li><a href="https://www.urbandemographics.org/publication/2013_urban_centrality_index/" class="external-link">Link to ungated PDF of the Pereira et al., (2013) paper</a></li>
 </ul>
@@ -65,13 +65,13 @@
 <span></span>
 <span><span class="co"># or use the development version with latest features</span></span>
 <span><span class="fu">utils</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/r/utils/remove.packages.html" class="external-link">remove.packages</a></span><span class="op">(</span><span class="st">'uci'</span><span class="op">)</span></span>
-<span><span class="fu">devtools</span><span class="fu">::</span><span class="fu">install_github</span><span class="op">(</span><span class="st">"ipeaGIT/uci"</span><span class="op">)</span></span></code></pre></div>
+<span><span class="fu">devtools</span><span class="fu">::</span><span class="fu">install_github</span><span class="op">(</span><span class="st">"ipea/uci"</span><span class="op">)</span></span></code></pre></div>
 </div>
 <div class="section level2">
 <h2 id="basic-usage">Basic Usage<a class="anchor" aria-label="anchor" href="#basic-usage"></a>
 </h2>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/ipeaGIT/uci" class="external-link">uci</a></span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/ipea/uci" class="external-link">uci</a></span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># load data</span></span>
 <span><span class="va">data_dir</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span><span class="st">"extdata"</span>, package <span class="op">=</span> <span class="st">"uci"</span><span class="op">)</span></span>
@@ -105,7 +105,7 @@
 </div>
 </div>
 <div class="section level1">
-<h1 id="citation-">Citation <img align="right" src="https://github.com/ipeaGIT/uci/raw/main/man/figures/ipea_logo.png" alt="ipea" width="300"><a class="anchor" aria-label="anchor" href="#citation-"></a>
+<h1 id="citation-">Citation <img align="right" src="https://github.com/ipea/uci/raw/main/man/figures/ipea_logo.png" alt="ipea" width="300"><a class="anchor" aria-label="anchor" href="#citation-"></a>
 </h1>
 <p>The R package <strong>uci</strong> is developed by a team at the Institute for Applied Economic Research (Ipea), Brazil. If you use this package in research publications, please cite it as:</p>
 <ul>
@@ -135,8 +135,8 @@
 <h2 data-toc-skip>Links</h2>
 <ul class="list-unstyled">
 <li><a href="https://cloud.r-project.org/package=uci" class="external-link">View on CRAN</a></li>
-<li><a href="https://github.com/ipeaGIT/uci/" class="external-link">Browse source code</a></li>
-<li><a href="https://github.com/ipeaGIT/uci/issues" class="external-link">Report a bug</a></li>
+<li><a href="https://github.com/ipea/uci/" class="external-link">Browse source code</a></li>
+<li><a href="https://github.com/ipea/uci/issues" class="external-link">Report a bug</a></li>
 </ul>
 </div>
 
@@ -175,7 +175,7 @@
 </div>
 
 <div class="pkgdown-footer-right">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.1.3.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.1.</p>
 </div>
 
     </footer>

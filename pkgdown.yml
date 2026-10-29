@@ -1,9 +1,9 @@
-pandoc: 3.1.11
-pkgdown: 2.1.3
+pandoc: 3.8.3
+pkgdown: 2.2.1
 pkgdown_sha: ~
 articles:
   uci: uci.html
-last_built: 2025-11-07T13:51Z
+last_built: 2026-10-29T01:20Z
 urls:
-  reference: https://ipeagit.github.io/uci/reference
-  article: https://ipeagit.github.io/uci/articles
+  reference: https://ipea.github.io/uci/reference
+  article: https://ipea.github.io/uci/articles
