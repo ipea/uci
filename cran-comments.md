@@ -1,10 +1,13 @@
 ## R CMD check results
 
 ── R CMD check results ───────────────────────────────────────────────────────────────────── uci 1.0.0 ────
-Duration: 1m 54.3s
+Duration: 1m 17.3s
 
 0 errors ✔ | 0 warnings ✔ | 0 notes ✔
 
+
+# notes
+- Package `stats` is now im Imports
 
 # uci v1.0.0
 

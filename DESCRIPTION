@@ -21,19 +21,19 @@ Depends:
 Imports:
     checkmate,
     cli (>= 3.2.0),
-    cppRouting,
+    cppRouting (>= 3.2),
     data.table,
     fields,
     rlang (>= 1.0.0),
     sf,
     spdep,
+    stats,
     utils
-Suggests: 
+Suggests:
     covr,
     knitr,
     ggplot2,
     rmarkdown,
-    stats,
     testthat (>= 3.2.0)
 VignetteBuilder: 
     knitr
