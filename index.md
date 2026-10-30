@@ -9,9 +9,9 @@ downloads](https://cranlogs.r-pkg.org/badges/grand-total/uci?color=blue)](https:
 [![R-CMD-check](https://github.com/ipea/uci/actions/workflows/rcmdcheck.yaml/badge.svg)](https://github.com/ipea/uci/actions)
 [![Codecov test
 coverage](https://codecov.io/gh/ipea/uci/branch/main/graph/badge.svg)](https://app.codecov.io/gh/ipea/uci?branch=main)
-[![DOI](https://img.shields.io/badge/DOI-10.1111/gean.12002-blue)](https://doi.org/10.1111/gean.12002)
 [![Lifecycle:
-experimental](https://img.shields.io/badge/lifecycle-experimental-orange.svg)](https://lifecycle.r-lib.org/articles/stages.html)
+experimental](https://img.shields.io/badge/lifecycle-stable-green.svg)](https://lifecycle.r-lib.org/articles/stages.html)
+[![DOI](https://img.shields.io/badge/DOI-10.1111/gean.12002-blue)](https://doi.org/10.1111/gean.12002)
 
 **uci** is an `R` package to calculate the Urban Centrality Index (UCI)
 originally proposed by Pereira et al., (2013). The UCI measures the
