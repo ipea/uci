@@ -65,8 +65,19 @@ remove_islands <- function(sf_object, var_name = NULL, showProgress = TRUE){
     "showProgress"
   )
 
+  return(
+    remove_islands_nb(sf_object, var_name, showProgress)$sf_object
+  )
+}
+
+# remove_islands() without input checks, also returning the queen neighbour
+# list of the kept rows (NULL for fewer than 2 rows), so that uci() does not
+# compute it twice
+#' @keywords internal
+remove_islands_nb <- function(sf_object, var_name, showProgress) {
+
   # spdep::poly2nb() fails on a single polygon, which has no islands anyway
-  if (nrow(sf_object) < 2) return(sf_object)
+  if (nrow(sf_object) < 2) return(list(sf_object = sf_object, nb = NULL))
 
   # keep only the largest group of neighbouring polygons (if tied, the group
   # of the earliest row: n.comp.nb numbers groups in row order)
@@ -75,7 +86,7 @@ remove_islands <- function(sf_object, var_name = NULL, showProgress = TRUE){
   )
   comp <- spdep::n.comp.nb(nb)$comp.id
   keep <- comp == which.max(table(comp))
-  if (all(keep)) return(sf_object)
+  if (all(keep)) return(list(sf_object = sf_object, nb = nb))
 
   if (isTRUE(showProgress)) {
     if (is.null(var_name)) {
@@ -94,5 +105,8 @@ remove_islands <- function(sf_object, var_name = NULL, showProgress = TRUE){
     }
   }
 
-  return(sf_object[keep, ])
+  # subset.nb() renumbers the neighbours of the kept rows as poly2nb() would
+  return(
+    list(sf_object = sf_object[keep, ], nb = spdep::subset.nb(nb, keep))
+  )
 }

@@ -195,15 +195,18 @@ uci <- function(
   sf_object <- suppressWarnings(sf::st_transform(sf_object, 3857))
 
   # keep only the largest group of neighbouring polygons
+  # (its neighbour list is reused for the spatial links)
   islands_removed <- FALSE
+  nb <- NULL
   if (isTRUE(remove_islands)) {
     n_before <- nrow(sf_object)
-    # R skips non-function bindings in calls: this is remove_islands()
-    sf_object <- remove_islands(
+    kept <- remove_islands_nb(
       sf_object,
       var_name = var_name,
       showProgress = showProgress
     )
+    sf_object <- kept$sf_object
+    nb <- kept$nb
     islands_removed <- nrow(sf_object) < n_before
   }
   if (nrow(sf_object) < 2) {
@@ -271,16 +274,16 @@ uci <- function(
     if (show_steps) {
       cli::cli_progress_step("Building spatial links between polygons")
     }
-    graph <- get_spatial_link_graph(sf_object)
+    graph <- get_spatial_link_graph(sf_object, nb)
+    # cppRouting (>= 3.2 checked) returns rows and columns in the order of
+    # from and to
     dist_pairs <- function(from, to) {
-      d <- cppRouting::get_distance_matrix(
+      cppRouting::get_distance_matrix(
         Graph = graph,
         from = from,
         to = to,
         algorithm = 'mch'
       )
-      # rows and columns in the order asked for
-      d[as.character(from), as.character(to), drop = FALSE]
     }
   }
   dist_fun <- function(rows) dist_pairs(keep[rows], keep)

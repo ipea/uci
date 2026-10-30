@@ -96,9 +96,10 @@ get_euclidean_dist_matrix <- function(sf_object){
 }
 
 # build graph of spatial links between neighbouring polygons. Node ids are the
-# row positions of the polygons in sf_object
+# row positions of the polygons in sf_object. nb is the queen neighbour list of
+# those rows (from remove_islands_nb()), or NULL to compute it here
 #' @keywords internal
-get_spatial_link_graph <- function(sf_object) {
+get_spatial_link_graph <- function(sf_object, nb = NULL) {
   
   # get distance between neighbors
   geo <- sf::st_geometry(sf_object)
@@ -110,7 +111,9 @@ get_spatial_link_graph <- function(sf_object) {
   ## using spdep
     # spdep's warnings (no neighbours, sub-graphs) are reported by the
     # contiguity error below
-    nb <- suppressWarnings(spdep::poly2nb(geo, queen = TRUE))
+    if (is.null(nb)) {
+      nb <- suppressWarnings(spdep::poly2nb(geo, queen = TRUE))
+    }
 
     # isolated polygons or separate clusters have no path between them
     nc <- spdep::n.comp.nb(nb)$nc

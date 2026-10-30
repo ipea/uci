@@ -259,6 +259,20 @@ test_that("blockwise venables equals the dense b'Db", {
     tolerance = 1e-12
   )
 
+  # uci() relies on cppRouting returning rows and columns in the order of
+  # from and to, including repeated ids
+  from <- c(5, 5, 3, 90, 3)
+  to <- c(7, 5, 5, 1, 1, 2)
+  d <- cppRouting::get_distance_matrix(graph, from = from, to = to)
+  testthat::expect_identical(
+    d,
+    d[as.character(from), as.character(to), drop = FALSE]
+  )
+  testthat::expect_identical(
+    dimnames(d),
+    list(as.character(from), as.character(to))
+  )
+
 })
 
 test_that("spatial_link caps and restores the number of threads", {
@@ -501,6 +515,22 @@ test_that("remove_islands() keeps the largest contiguous group", {
   result <- suppressMessages(remove_islands(grid_island_3857))
   testthat::expect_identical(sf::st_crs(result), sf::st_crs(3857))
   testthat::expect_identical(nrow(result), nrow(grid))
+
+  # the neighbour list that uci() reuses equals the one of the kept rows
+  kept <- suppressMessages(
+    remove_islands_nb(grid_island_3857, NULL, showProgress = TRUE)
+  )
+  testthat::expect_identical(kept$sf_object, result)
+  nb_kept <- spdep::poly2nb(sf::st_geometry(result), queen = TRUE)
+  testthat::expect_identical(
+    lapply(kept$nb, as.integer),
+    lapply(nb_kept, as.integer)
+  )
+  testthat::expect_identical(
+    lapply(remove_islands_nb(result, NULL, FALSE)$nb, as.integer),
+    lapply(nb_kept, as.integer)
+  )
+  testthat::expect_null(remove_islands_nb(grid[1, ], NULL, FALSE)$nb)
 
   # input errors
   testthat::expect_error(remove_islands(1), class = "rlang_error")
