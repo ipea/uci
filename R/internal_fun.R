@@ -48,6 +48,34 @@ get_self_distance <- function(sf_object) {
 }
 
 
+# TRUE if the study area is markedly concave (e.g. a bay) or has a large gap
+# inside it (e.g. a lake, ~10% of the area or more): its largest part covers
+# less than 90% of its convex hull. A closing by about one cell
+# diameter first removes the jagged edges and small gaps of a grid (so inlets
+# narrower than ~2 cells are ignored by design); islands are ignored. Convex
+# but narrow regions (< ~5 cells wide) running diagonally to a hexagonal grid
+# keep a staircase edge and may still be flagged.
+# sf_object: the grid (cell areas give the closing distance).
+# area_union: sf::st_union(sf_object), the outline of the study area; passed
+# in because uci() also uses it to find the border cells, so it is computed
+# once. Lon/lat input is projected to EPSG:3857 (as in uci()), since a
+# negative buffer on lon/lat data is read in degrees and empties the outline
+#' @keywords internal
+is_concave <- function(sf_object, area_union) {
+  if (isTRUE(sf::st_is_longlat(area_union))) {
+    sf_object <- sf::st_transform(sf_object, 3857)
+    area_union <- sf::st_transform(area_union, 3857)
+  }
+  d <- 2 * sqrt(stats::median(as.numeric(sf::st_area(sf_object))) / pi)
+  closed <- sf::st_buffer(sf::st_buffer(area_union, d), -d)
+  parts <- sf::st_cast(closed, "POLYGON")
+  main <- parts[which.max(sf::st_area(parts))]
+  solidity <- as.numeric(sf::st_area(main) /
+                           sf::st_area(sf::st_convex_hull(main)))
+  return(isTRUE(solidity < 0.9))
+}
+
+
 # coordinates of polygon centroids
 #' @keywords internal
 get_centroid_coords <- function(sf_object) {

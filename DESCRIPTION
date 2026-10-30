@@ -1,7 +1,7 @@
 Type: Package
 Package: uci
 Title: Urban Centrality Index
-Version: 0.3.1.9000
+Version: 1.0.0
 Authors@R: c(
     person("Rafael H. M.", "Pereira", , "rafa.pereira.br@gmail.com", role = c("aut", "cre"),
            comment = c(ORCID = "0000-0003-2125-7465"))

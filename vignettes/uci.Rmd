@@ -129,14 +129,17 @@ df <- uci(
 df
 ```
 
-Alternatively, you use `dist_type = 'spatial_link'` and pass `remove_islands = TRUE`. In this case, `uci()` drops the islands calculates UCI only for the largest group of neighbouring polygons:
+The warning is expected: Rio's coastline is concave, so Euclidean distances between centroids can cross the bays.
+
+Alternatively, you use `dist_type = 'spatial_link'` and pass `remove_islands = TRUE`. In this case, `uci()` drops the islands calculates UCI only for the largest group of neighbouring polygons. For large areas, users can speed up the process of calculating 'spatial_link' distances by passing `parallel = FALSE`.
 
 ```{r, eval = TRUE}
 df <- uci(
   sf_object = grid_rio,
   var_name = 'jobs',
   dist_type = 'spatial_link',
-  remove_islands = TRUE
+  remove_islands = TRUE,
+  parallel = FALSE
   )
 
 df

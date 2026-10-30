@@ -98,7 +98,7 @@ uci <- function(sf_object,
   if(parallel)
   {
     # number of cores
-    cores <- max(1, future::availableCores() - 1)
+    cores <- parallelly::availableCores(omit = 1)
     message(paste('Using', cores, 'CPU cores'))
     
     oplan <- future::plan("multisession", workers = cores)

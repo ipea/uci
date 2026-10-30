@@ -99,10 +99,15 @@ test_that("returns the expected values", {
 
 test_that("returns the expected values on a grid with islands", {
 
-  testthat::expect_no_warning(result <- tester(sf_object = grid_rio))
+  # Rio's coastline is concave: Euclidean distances raise a warning
+  grid_rio2 <- grid_rio
+  testthat::expect_warning(result <- tester(sf_object = grid_rio2), "concave")
+  testthat::expect_identical(grid_rio2, grid_rio)
   testthat::expect_equal(result$UCI, 0.4201327235, tolerance = 1e-5)
   testthat::expect_equal(
-    tester(sf_object = grid_rio, max_method = 'heuristic')$UCI,
+    suppressWarnings(
+      tester(sf_object = grid_rio, max_method = 'heuristic')
+    )$UCI,
     0.3297768490, tolerance = 1e-6
   )
 
@@ -121,6 +126,38 @@ test_that("returns the expected values on a grid with islands", {
     )
   )
   testthat::expect_equal(result$UCI, 0.4045098506, tolerance = 1e-5)
+
+})
+
+test_that("is_concave() ignores jagged edges of convex grids", {
+
+  hex_grid <- function(shape, cellsize) {
+    shape <- sf::st_sfc(shape, crs = 3857)
+    g <- sf::st_make_grid(shape, cellsize = cellsize, square = FALSE)
+    g <- g[lengths(sf::st_intersects(g, shape)) > 0]
+    return(sf::st_sf(geometry = g))
+  }
+  check <- function(g) is_concave(g, sf::st_union(g))
+
+  # coarse grid of a convex square and a narrow convex strip
+  square <- sf::st_polygon(list(
+    rbind(c(0, 0), c(1e4, 0), c(1e4, 1e4), c(0, 1e4), c(0, 0))
+  ))
+  strip <- sf::st_polygon(list(
+    rbind(c(0, 0), c(3e4, 0), c(3e4, 2e3), c(0, 2e3), c(0, 0))
+  ))
+  testthat::expect_false(check(hex_grid(square, 2500)))
+  testthat::expect_false(check(hex_grid(strip, 1000)))
+  testthat::expect_false(check(sf::st_transform(grid, 3857)))
+  testthat::expect_true(check(sf::st_transform(grid_rio, 3857)))
+  # lon/lat input gives the same answer
+  testthat::expect_true(check(grid_rio))
+  testthat::expect_false(check(grid))
+
+  # a lake covering ~13% of a convex square counts as a large gap
+  lake <- sf::st_sfc(sf::st_buffer(sf::st_point(c(5e3, 5e3)), 2e3), crs = 3857)
+  g <- hex_grid(square, 250)
+  testthat::expect_true(check(g[lengths(sf::st_intersects(g, lake)) == 0, ]))
 
 })
 

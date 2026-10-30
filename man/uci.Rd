@@ -33,7 +33,9 @@ Spatial link distances consider Euclidean distances along the links of
 spatial neighbor links. In the case of areas with a concave shape
 (like a bay), it is strongly recommended to use \code{"spatial_link"}
 distances (even though they are computationally more costly) because
-simple Euclidean distances can bias UCI estimates in those cases.}
+simple Euclidean distances can bias UCI estimates in those cases.
+\code{uci()} warns when the study area is markedly concave or has a
+large gap inside it (e.g. a lake) and \code{dist_type = "euclidean"}.}
 
 \item{bootstrap_border}{A \code{logical}. Deprecated, use
 \code{max_method = "bootstrap"}. If \code{TRUE} and \code{max_method} is \code{NULL},

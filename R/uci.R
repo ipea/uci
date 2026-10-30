@@ -20,6 +20,8 @@
 #'        (like a bay), it is strongly recommended to use `"spatial_link"`
 #'        distances (even though they are computationally more costly) because
 #'        simple Euclidean distances can bias UCI estimates in those cases.
+#'        `uci()` warns when the study area is markedly concave or has a
+#'        large gap inside it (e.g. a lake) and `dist_type = "euclidean"`.
 #' @param remove_islands A `logical`. Defaults to `FALSE`. If `TRUE`, only the
 #'        largest group of neighbouring polygons (queen contiguity), i.e. the
 #'        one with the most polygons, is kept, and polygons outside it, along
@@ -204,6 +206,19 @@ uci <- function(
   }
   # var <- var[var > 0]
 
+  # outline of the study area (also used for the border cells below)
+  area_union <- sf::st_union(sf_object)
+  if (dist_type == 'euclidean' && is_concave(sf_object, area_union)) {
+    cli::cli_warn(
+      c(
+        "The study area has a concave shape or a large gap inside it (e.g. a
+         bay or a lake). Euclidean distances between centroids can cross
+         areas outside it and bias UCI.",
+        "i" = "Consider {.code dist_type = \"spatial_link\"}."
+      )
+    )
+  }
+
   # normalize distribution of variable
   var_x_norm <- normalize_distribution(var)
 
@@ -263,7 +278,7 @@ uci <- function(
   }
 
   # get perimeter of whole area
-  boundary <- sf::st_boundary(sf::st_union(sf_object))
+  boundary <- sf::st_boundary(area_union)
 
   # Determine which polygons are on the border
   int <- sf::st_intersects(sf_object, boundary)

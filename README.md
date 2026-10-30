@@ -12,7 +12,7 @@ coverage](https://codecov.io/gh/ipea/uci/branch/main/graph/badge.svg)](https://a
 [![Lifecycle:
      experimental](https://img.shields.io/badge/lifecycle-experimental-orange.svg)](https://lifecycle.r-lib.org/articles/stages.html)
 
-**uci** is an `R` package to calculate the Urban Centrality Index (UCI) originally proposed by Pereira et al., (2013). The UCI measures the extent to which the spatial organization of a city or region varies from extreme polycentric to extreme monocentric in a continuous scale from 0 to 1. Values close to 0 indicate more polycentric patterns and values close to 1 indicate a more monocentric urban form. More info on [this vignette](https://ipea.github.io/uci/articles/uci.html).
+**uci** is an `R` package to calculate the Urban Centrality Index (UCI) originally proposed by Pereira et al., (2013). The UCI measures the extent to which the spatial organization of a city or region varies from polycentric to monocentric in a continuous scale from 0 to 1. Values close to 0 indicate more polycentric patterns and values close to 1 indicate a more monocentric urban form. More info on [this vignette](https://ipea.github.io/uci/articles/uci.html).
 
 * [Link to ungated PDF of the Pereira et al., (2013) paper](https://www.urbandemographics.org/publication/2013_urban_centrality_index/)
 
