@@ -3,11 +3,11 @@
 **uci** is an `R` package to measure the centrality of cities and
 regions. The package implements the Urban Centrality Index (UCI)
 originally proposed by Pereira et al. (2013). UCI measures the extent to
-which the spatial organization of a city varies from extreme monocentric
-to extreme polycentric in a continuous scale, rather than considering a
-binary classification (*either* monocentric *or* polycentric). UCI
-values range from 0 to 1. Values closer to 0 indicate more polycentric
-patterns and values closer to 1 indicate a more monocentric urban form.
+which the spatial organization of a city varies from monocentric to
+polycentric in a continuous scale, rather than considering a binary
+classification (*either* monocentric *or* polycentric). UCI values range
+from 0 to 1. Values closer to 0 indicate more polycentric patterns and
+values closer to 1 indicate a more monocentric urban form.
 
 ## Installation
 
@@ -89,7 +89,8 @@ ggplot(data = grid) +
 ### Calculating UCI
 
 In the example below, we calculate how mono/polycentric our study area
-is considering its spatial distribution of jobs.
+is considering its spatial distribution of jobs considering Euclidian
+distances between polygons.
 
 ``` r
 
@@ -99,9 +100,9 @@ df <- uci(
   dist_type = 'euclidean'
   )
 
-head(df)
+df
 #>         UCI location_coef spatial_separation spatial_separation_max
-#> 1 0.2538635     0.5278007           3880.114               7475.899
+#> 1 0.2612105     0.5278007           3880.114               7681.927
 ```
 
 By default, the [`uci()`](https://ipea.github.io/uci/reference/uci.md)
@@ -127,19 +128,22 @@ df <- uci(
   dist_type = 'spatial_link'
   )
 
-head(df)
+df
 #>         UCI location_coef spatial_separation spatial_separation_max
-#> 1 0.2535891     0.5278007           4281.819               8241.617
+#> 1 0.2609465     0.5278007           4281.819               8468.847
 ```
 
-The package also includes a larger and more irregular sample data set,
-`grid_rio.rds`. It covers the municipality of Rio de Janeiro, Brazil,
-with a concave outline around the Guanabara and Sepetiba bays and
-several islands, including single isolated cells. The data comes from
-the [Access to Opportunities
+Where there are no bridges or roads connecting isolated polygons, we can
+remove them by passing the arugment `remove_islands = TRUE`. Let’s see
+this in another example data set using the city of Rio de Janeiro,
+Brazil.
+
+The `grid_rio.rds` data set covers the municipality of Rio, with a
+concave outline around the Guanabara and Sepetiba bays and several
+islands, including single isolated cells. The data comes from the
+[Access to Opportunities
 Project](https://www.ipea.gov.br/acessooportunidades/en/) (AOP, Ipea,
-2019), aggregated to H3 resolution 8. Because of its islands, the full
-grid only works with `dist_type = 'euclidean'`:
+2019), aggregated to H3 resolution 8.
 
 ``` r
 
@@ -157,8 +161,8 @@ ggplot(data = grid_rio) +
 ![](uci_files/figure-html/unnamed-chunk-10-1.png)
 
 As you can see, the case of Rio include a few islands disconnected from
-mainland. In this case, the user has two options. One of them is using
-`dist_type = 'euclidean'`.
+mainland. Because of these islands, we can only consider the full grid
+in the calculation of UCI if we use `dist_type = 'euclidean'`.
 
 ``` r
 
@@ -168,16 +172,25 @@ df <- uci(
   var_name = 'jobs',
   dist_type = 'euclidean'
   )
+#> Warning: The study area has a concave shape or a large gap inside it (e.g. a bay or a
+#> lake). Euclidean distances between centroids can cross areas outside it and
+#> bias UCI.
+#> ℹ Consider `dist_type = "spatial_link"`.
 
 df
 #>         UCI location_coef spatial_separation spatial_separation_max
-#> 1 0.3297768      0.693971           17632.32               33598.34
+#> 1 0.4201327      0.693971           17632.32               44684.47
 ```
+
+The warning is expected: Rio’s coastline is concave, so Euclidean
+distances between centroids can cross the bays.
 
 Alternatively, you use `dist_type = 'spatial_link'` and pass
 `remove_islands = TRUE`. In this case,
 [`uci()`](https://ipea.github.io/uci/reference/uci.md) drops the islands
-calculates UCI only for the largest group of neighbouring polygons:
+calculates UCI only for the largest group of neighbouring polygons. For
+large areas, users can speed up the process of calculating
+‘spatial_link’ distances by passing `parallel = FALSE`.
 
 ``` r
 
@@ -185,14 +198,15 @@ df <- uci(
   sf_object = grid_rio,
   var_name = 'jobs',
   dist_type = 'spatial_link',
-  remove_islands = TRUE
+  remove_islands = TRUE,
+  parallel = FALSE
   )
 #> Removed 44 polygons (255 jobs) outside the largest contiguous area of
 #> `sf_object`.
 
 df
 #>         UCI location_coef spatial_separation spatial_separation_max
-#> 1 0.3166672     0.6894746           19331.93               35752.71
+#> 1 0.4045099     0.6894746           19331.93               46773.76
 ```
 
 To see which polygons are dropped before calculating UCI, use the
@@ -278,47 +292,62 @@ of the total employment. In a region forming a perfect circle, the
 maximum value of V occurs when all employment is evenly distributed
 along the external edge.
 
-In the original paper, Pereira et al. (2013) proposed a simple heuristic
-approach to calculate `Vmax`(the “opposite of maximum proximity”) as a
-homogeneous distribution of values along the edge of the study area.
-This is the default strategy used in the
-[`uci()`](https://ipea.github.io/uci/reference/uci.md) function with the
-default parameter `bootstrap_border = FALSE`. Nonetheless, the users can
-also use a bootstrap simulation approach to estimate `Vmax` by setting
-`bootstrap_border = TRUE`.
+#### Finding `Vmax`
 
-#### Bootstraping `Vmax`
-
-Using bootstrap to find max Venables spatial separation. With
-`dist_type = "spatial_link"`, users can set `parallel = TRUE` to compute
-shortest-path distances using several threads.
+By default (`max_method = "exact"`),
+[`uci()`](https://ipea.github.io/uci/reference/uci.md) searches for the
+distribution of activities among the polygons on the border of the study
+area that maximises `V`. With Euclidean distances between centroids this
+problem is concave, so the search (a simple multiplicative update of the
+weights, stopped when the optimality conditions hold) reaches the global
+maximum. The result is then refined with the self distance of each
+polygon included, so that `Vmax` is a stationary point of the same
+quantity as `V`, and checked against the polygons outside the border.
+With `"spatial_link"` distances the same procedure gives a stationary
+point.
 
 ``` r
 
-df_bootstrap <- uci(
+df_exact <- uci(
   sf_object = grid,
   var_name = 'jobs',
-  bootstrap_border = TRUE,
   showProgress = FALSE
 )
 
-head(df_bootstrap)
+head(df_exact)
 #>         UCI location_coef spatial_separation spatial_separation_max
-#> 1 0.2553067     0.5278007           3880.114               7515.494
+#> 1 0.2612105     0.5278007           3880.114               7681.927
 ```
 
-This bootstrap approach simulates 20000 random distributions of
-activities along the border. It practice, it works interacting two
-simulations: (1) it simulates that all jobs are concentrated in up to 2,
-3, 4, 5 … 51 polygons along the border, and (2) for each number of
-selected polygons, it shuffles 400 random positions of those polygons
-along the border.
+With `dist_type = "spatial_link"`, users can set `parallel = TRUE` to
+compute shortest-path distances using several threads.
 
-The bootstrap approach is more computationally expensive but it returns
-`Vmax` values that can be between 5 and 25% higher than the heuristic
-approach. Although the bootstrap simulation might still not return the
-maximum theoretical value of spatial separation, it is probably very
-close to it
+Two other approaches are kept so that results of previous versions can
+be reproduced. In the original paper, Pereira et al. (2013) proposed a
+simple heuristic approach to calculate `Vmax` (the “opposite of maximum
+proximity”) as a homogeneous distribution of values along the edge of
+the study area (`max_method = "heuristic"`). The bootstrap approach
+(`max_method = "bootstrap"`) simulates 20000 random distributions of
+activities along the border: it simulates that all jobs are concentrated
+in up to 2, 3, 4, 5 … 51 polygons along the border, and for each number
+of selected polygons it shuffles 400 random positions of those polygons
+along the border, keeping the largest `V` found. Both are lower bounds
+of `Vmax`, so they overestimate `V / Vmax` and underestimate UCI, by an
+amount that depends on the shape of the study area.
+
+``` r
+
+df_heuristic <- uci(
+  sf_object = grid,
+  var_name = 'jobs',
+  max_method = "heuristic",
+  showProgress = FALSE
+)
+
+head(df_heuristic)
+#>         UCI location_coef spatial_separation spatial_separation_max
+#> 1 0.2538635     0.5278007           3880.114               7475.899
+```
 
 ## References
 

@@ -22,7 +22,7 @@
 
     <a class="navbar-brand me-2" href="index.html">uci</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.1.9000</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -52,7 +52,7 @@
 <div class="page-header"><h1 id="uci-urban-centrality-index">uci: Urban Centrality Index<a class="anchor" aria-label="anchor" href="#uci-urban-centrality-index"></a>
 </h1></div>
 <p><a href="https://CRAN.R-project.org/package=uci" class="external-link"><img src="https://www.r-pkg.org/badges/version/uci" alt="CRAN status"></a> <a href="https://CRAN.R-project.org/package=uci" class="external-link"><img src="https://cranlogs.r-pkg.org/badges/grand-total/uci?color=blue" alt="CRAN/METACRAN Total downloads"></a> <a href="https://github.com/ipea/uci/actions" class="external-link"><img src="https://github.com/ipea/uci/actions/workflows/rcmdcheck.yaml/badge.svg" alt="R-CMD-check"></a> <a href="https://app.codecov.io/gh/ipea/uci?branch=main" class="external-link"><img src="https://codecov.io/gh/ipea/uci/branch/main/graph/badge.svg" alt="Codecov test coverage"></a> <a href="https://doi.org/10.1111/gean.12002" class="external-link"><img src="https://img.shields.io/badge/DOI-10.1111/gean.12002-blue" alt="DOI"></a> <a href="https://lifecycle.r-lib.org/articles/stages.html" class="external-link"><img src="https://img.shields.io/badge/lifecycle-experimental-orange.svg" alt="Lifecycle: experimental"></a></p>
-<p><strong>uci</strong> is an <code>R</code> package to calculate the Urban Centrality Index (UCI) originally proposed by Pereira et al., (2013). The UCI measures the extent to which the spatial organization of a city or region varies from extreme polycentric to extreme monocentric in a continuous scale from 0 to 1. Values close to 0 indicate more polycentric patterns and values close to 1 indicate a more monocentric urban form. More info on <a href="https://ipea.github.io/uci/articles/uci.html">this vignette</a>.</p>
+<p><strong>uci</strong> is an <code>R</code> package to calculate the Urban Centrality Index (UCI) originally proposed by Pereira et al., (2013). The UCI measures the extent to which the spatial organization of a city or region varies from polycentric to monocentric in a continuous scale from 0 to 1. Values close to 0 indicate more polycentric patterns and values close to 1 indicate a more monocentric urban form. More info on <a href="https://ipea.github.io/uci/articles/uci.html">this vignette</a>.</p>
 <ul>
 <li><a href="https://www.urbandemographics.org/publication/2013_urban_centrality_index/" class="external-link">Link to ungated PDF of the Pereira et al., (2013) paper</a></li>
 </ul>
@@ -95,13 +95,12 @@
 <span><span class="va">df</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/uci.html">uci</a></span><span class="op">(</span></span>
 <span>       sf_object <span class="op">=</span> <span class="va">grid</span>,</span>
 <span>       var_name <span class="op">=</span> <span class="st">'jobs'</span>,</span>
-<span>       bootstrap_border <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>       showProgress <span class="op">=</span> <span class="cn">TRUE</span></span>
 <span>       <span class="op">)</span></span>
 <span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">df</span><span class="op">)</span></span>
 <span><span class="co">#&gt;         UCI location_coef spatial_separation spatial_separation_max</span></span>
-<span><span class="co">#&gt; 1 0.2538635     0.5278007           3880.114               7475.899</span></span></code></pre></div>
+<span><span class="co">#&gt; 1 0.2612105     0.5278007           3880.114               7681.927</span></span></code></pre></div>
 </div>
 </div>
 <div class="section level1">

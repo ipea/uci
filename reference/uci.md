@@ -20,7 +20,8 @@ uci(
   bootstrap_border = FALSE,
   showProgress = TRUE,
   parallel = FALSE,
-  remove_islands = FALSE
+  remove_islands = FALSE,
+  max_method = NULL
 )
 ```
 
@@ -28,9 +29,9 @@ uci(
 
 - sf_object:
 
-  A `POLYGON sf data.frame` of the study area. Distances and areas are
-  computed in EPSG:3857 (Web Mercator), which distorts very large
-  regions.
+  A `POLYGON sf data.frame` of the study area, with at least two
+  polygons. Distances and areas are computed in EPSG:3857 (Web
+  Mercator), which distorts very large regions.
 
 - var_name:
 
@@ -48,21 +49,14 @@ uci(
   (like a bay), it is strongly recommended to use `"spatial_link"`
   distances (even though they are computationally more costly) because
   simple Euclidean distances can bias UCI estimates in those cases.
+  `uci()` warns when the study area is markedly concave or has a large
+  gap inside it (e.g. a lake) and `dist_type = "euclidean"`.
 
 - bootstrap_border:
 
-  A `logical`. The calculation of UCI requires one to find the maximum
-  value of the Venables spatial separation index of the study area. If
-  `bootstrap_border = FALSE` (Default), the function uses a heuristic
-  approach that assumes that the max spatial separation would occur when
-  all activities were equally distributed along the border of the study
-  area. This is a fast approach, but it does not reach the maximum
-  spatial separation. Alternatively, if `bootstrap_border = TRUE`, the
-  function uses a bootstrap approach that simulates 20000 random
-  distributions of activities along the border and uses the max spatial
-  separation found. This approach is more computationally expensive and
-  although it might not return the maximum theoretical value of spatial
-  separation, it is probably very close to it.
+  A `logical`. Deprecated, use `max_method = "bootstrap"`. If `TRUE` and
+  `max_method` is `NULL`, the bootstrap is used; an explicit
+  `max_method` takes precedence.
 
 - showProgress:
 
@@ -84,13 +78,45 @@ uci(
 
 - remove_islands:
 
-  A `logical`. If `TRUE`, only the largest group of neighbouring
-  polygons (queen contiguity), i.e. the one with the most polygons, is
-  kept, and polygons outside it, along with their activities, are
-  dropped before any calculation. This applies to both `dist_type`s, and
-  it lets `"spatial_link"` distances be used in areas with islands.
-  Defaults to `FALSE`. See
+  A `logical`. Defaults to `FALSE`. If `TRUE`, only the largest group of
+  neighbouring polygons (queen contiguity), i.e. the one with the most
+  polygons, is kept, and polygons outside it, along with their
+  activities, are dropped before any calculation. When there are
+  isolated islands, `"spatial_link"` distances only works with
+  `remove_islands = TRUE`. Defaults to `FALSE`. See
   [`remove_islands()`](https://ipea.github.io/uci/reference/remove_islands.md).
+
+- max_method:
+
+  A `string`, or `NULL` (Default), which means `"exact"` unless
+  `bootstrap_border = TRUE`. How to find the maximum value of the
+  Venables spatial separation index that the study area admits
+  (`spatial_separation_max`), which normalises the index. `"exact"`
+  searches for the distribution of activities among the border polygons
+  that maximises the spatial separation. The search is done on the
+  distances between polygon centroids, where the maximum is global for
+  Euclidean distances, and the result is then refined with the self
+  distance of each polygon included in the distances, so that it is a
+  stationary point of the same quantity as `spatial_separation`. UCI is
+  0 (up to the solver tolerance) when the activities sit on that
+  maximising configuration. With `"spatial_link"` distances the same
+  procedure gives a stationary point. `"heuristic"` is the approach of
+  Pereira et al. (2013), which assumes that the maximum occurs when all
+  activities are equally distributed along the border of the study area.
+  It is fast, but it does not reach the maximum spatial separation, so
+  it underestimates UCI by an amount that depends on the shape of the
+  area. `"bootstrap"` simulates 20000 random distributions of activities
+  along the border and uses the largest spatial separation found; it
+  gets closer to the maximum than the heuristic but does not reach it
+  either. Options `"heuristic"` and `"bootstrap"` two are kept so that
+  results of previous versions can be reproduced.
+
+## Value
+
+A one-row `data.frame` with the columns `UCI`, `location_coef` (LC),
+`spatial_separation` (the Venables index V of the observed distribution)
+and `spatial_separation_max` (its maximum for the study area, as found
+by `max_method`), so that `UCI = LC * (1 - V / V_max)`.
 
 ## Usage
 
@@ -131,22 +157,10 @@ grid <- readRDS(file.path(data_dir, "grid_bho.rds"))
 df <- uci(
         sf_object = grid,
         var_name = 'jobs',
-        dist_type = "euclidean",
-        bootstrap_border = FALSE
+        dist_type = "spatial_link"
         )
+
 head(df)
 #>         UCI location_coef spatial_separation spatial_separation_max
-#> 1 0.2538635     0.5278007           3880.114               7475.899
-
-# calculate UCI with bootstrap
-df2 <- uci(
-        sf_object = grid,
-        var_name = 'jobs',
-        dist_type = "euclidean",
-        bootstrap_border = TRUE,
-        showProgress = TRUE
-        )
-head(df2)
-#>         UCI location_coef spatial_separation spatial_separation_max
-#> 1 0.2553067     0.5278007           3880.114               7515.494
+#> 1 0.2609465     0.5278007           4281.819               8468.847
 ```

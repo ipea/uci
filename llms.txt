@@ -16,9 +16,9 @@ experimental](https://img.shields.io/badge/lifecycle-experimental-orange.svg)](h
 **uci** is an `R` package to calculate the Urban Centrality Index (UCI)
 originally proposed by Pereira et al., (2013). The UCI measures the
 extent to which the spatial organization of a city or region varies from
-extreme polycentric to extreme monocentric in a continuous scale from 0
-to 1. Values close to 0 indicate more polycentric patterns and values
-close to 1 indicate a more monocentric urban form. More info on [this
+polycentric to monocentric in a continuous scale from 0 to 1. Values
+close to 0 indicate more polycentric patterns and values close to 1
+indicate a more monocentric urban form. More info on [this
 vignette](https://ipea.github.io/uci/articles/uci.html).
 
 - [Link to ungated PDF of the Pereira et al., (2013)
@@ -64,13 +64,12 @@ head(grid)
 df <- uci(
        sf_object = grid,
        var_name = 'jobs',
-       bootstrap_border = FALSE,
        showProgress = TRUE
        )
 
 head(df)
 #>         UCI location_coef spatial_separation spatial_separation_max
-#> 1 0.2538635     0.5278007           3880.114               7475.899
+#> 1 0.2612105     0.5278007           3880.114               7681.927
 ```
 
 # Citation ![ipea](https://github.com/ipea/uci/raw/main/man/figures/ipea_logo.png)

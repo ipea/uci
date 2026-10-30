@@ -19,7 +19,7 @@ Calculate Urban Centrality Index"></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">uci</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.1.9000</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -65,7 +65,8 @@ values close to 1 indicate a more monocentric urban form.</p>
 <span>  bootstrap_border <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  showProgress <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  parallel <span class="op">=</span> <span class="cn">FALSE</span>,</span>
-<span>  remove_islands <span class="op">=</span> <span class="cn">FALSE</span></span>
+<span>  remove_islands <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  max_method <span class="op">=</span> <span class="cn">NULL</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -74,9 +75,9 @@ values close to 1 indicate a more monocentric urban form.</p>
 
 
 <dl><dt id="arg-sf-object">sf_object<a class="anchor" aria-label="anchor" href="#arg-sf-object"></a></dt>
-<dd><p>A <code>POLYGON sf data.frame</code> of the study area. Distances and
-areas are computed in EPSG:3857 (Web Mercator), which distorts very
-large regions.</p></dd>
+<dd><p>A <code>POLYGON sf data.frame</code> of the study area, with at
+least two polygons. Distances and areas are computed in EPSG:3857
+(Web Mercator), which distorts very large regions.</p></dd>
 
 
 <dt id="arg-var-name">var_name<a class="anchor" aria-label="anchor" href="#arg-var-name"></a></dt>
@@ -93,22 +94,15 @@ Spatial link distances consider Euclidean distances along the links of
 spatial neighbor links. In the case of areas with a concave shape
 (like a bay), it is strongly recommended to use <code>"spatial_link"</code>
 distances (even though they are computationally more costly) because
-simple Euclidean distances can bias UCI estimates in those cases.</p></dd>
+simple Euclidean distances can bias UCI estimates in those cases.
+<code>uci()</code> warns when the study area is markedly concave or has a
+large gap inside it (e.g. a lake) and <code>dist_type = "euclidean"</code>.</p></dd>
 
 
 <dt id="arg-bootstrap-border">bootstrap_border<a class="anchor" aria-label="anchor" href="#arg-bootstrap-border"></a></dt>
-<dd><p>A <code>logical</code>. The calculation of UCI requires one to
-find the maximum value of the Venables spatial separation index of the
-study area. If <code>bootstrap_border = FALSE</code> (Default), the function uses
-a heuristic approach that assumes that the max spatial separation
-would occur when all activities were equally distributed along the
-border of the study  area. This is a fast approach, but it does not
-reach the maximum spatial separation. Alternatively, if <code>bootstrap_border = TRUE</code>,
-the function uses a bootstrap approach that simulates 20000 random
-distributions of activities along the border and uses the max spatial
-separation found. This approach is more computationally expensive and
-although it might not return the maximum theoretical value of spatial
-separation, it is probably very close to it.</p></dd>
+<dd><p>A <code>logical</code>. Deprecated, use
+<code>max_method = "bootstrap"</code>. If <code>TRUE</code> and <code>max_method</code> is <code>NULL</code>,
+the bootstrap is used; an explicit <code>max_method</code> takes precedence.</p></dd>
 
 
 <dt id="arg-showprogress">showProgress<a class="anchor" aria-label="anchor" href="#arg-showprogress"></a></dt>
@@ -130,15 +124,48 @@ default, see <code><a href="https://rdrr.io/pkg/RcppParallel/man/setThreadOption
 
 
 <dt id="arg-remove-islands">remove_islands<a class="anchor" aria-label="anchor" href="#arg-remove-islands"></a></dt>
-<dd><p>A <code>logical</code>. If <code>TRUE</code>, only the largest group of
-neighbouring polygons (queen contiguity), i.e. the one with the most
-polygons, is kept, and polygons
-outside it, along with their activities, are dropped before any
-calculation. This applies to both <code>dist_type</code>s, and it lets
-<code>"spatial_link"</code> distances be used in areas with islands. Defaults
-to <code>FALSE</code>. See <code><a href="remove_islands.html">remove_islands()</a></code>.</p></dd>
+<dd><p>A <code>logical</code>. Defaults to <code>FALSE</code>. If <code>TRUE</code>, only the
+largest group of neighbouring polygons (queen contiguity), i.e. the
+one with the most polygons, is kept, and polygons outside it, along
+with their activities, are dropped before any calculation. When there
+are isolated islands, <code>"spatial_link"</code> distances only works with
+<code>remove_islands = TRUE</code>. Defaults to <code>FALSE</code>. See <code><a href="remove_islands.html">remove_islands()</a></code>.</p></dd>
+
+
+<dt id="arg-max-method">max_method<a class="anchor" aria-label="anchor" href="#arg-max-method"></a></dt>
+<dd><p>A <code>string</code>, or <code>NULL</code> (Default), which means <code>"exact"</code>
+unless <code>bootstrap_border = TRUE</code>. How to find the maximum value of
+the Venables spatial separation index that the study area admits
+(<code>spatial_separation_max</code>), which normalises the index. <code>"exact"</code>
+searches for the distribution of activities among the
+border polygons that maximises the spatial separation. The search
+is done on the distances between polygon centroids, where the
+maximum is global for Euclidean distances, and the result is then
+refined with the self distance of each polygon included in the
+distances, so that it is a stationary point of the same quantity as
+<code>spatial_separation</code>. UCI is 0 (up to the solver tolerance) when the
+activities sit on that maximising configuration. With
+<code>"spatial_link"</code> distances the same procedure gives a stationary
+point. <code>"heuristic"</code> is the approach of Pereira et al. (2013),
+which assumes that the maximum occurs when all activities are
+equally distributed along the border of the study area. It is fast,
+but it does not reach the maximum spatial separation, so it
+underestimates UCI by an amount that depends on the shape of the
+area. <code>"bootstrap"</code> simulates 20000 random distributions of
+activities along the border and uses the largest spatial separation
+found; it gets closer to the maximum than the heuristic but does not
+reach it either. Options <code>"heuristic"</code> and <code>"bootstrap"</code> two are kept
+so that results of previous versions can be reproduced.</p></dd>
 
 </dl></div>
+    <div class="section level2">
+    <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
+    <p>A one-row <code>data.frame</code> with the columns <code>UCI</code>, <code>location_coef</code>
+(LC), <code>spatial_separation</code> (the Venables index V of the observed
+distribution) and <code>spatial_separation_max</code> (its maximum for the
+study area, as found by <code>max_method</code>), so that
+<code>UCI = LC * (1 - V / V_max)</code>.</p>
+    </div>
     <div class="section level2">
     <h2 id="usage">Usage<a class="anchor" aria-label="anchor" href="#usage"></a></h2>
 
@@ -170,24 +197,13 @@ to <code>FALSE</code>. See <code><a href="remove_islands.html">remove_islands()<
 <span class="r-in"><span><span class="va">df</span> <span class="op">&lt;-</span> <span class="fu">uci</span><span class="op">(</span></span></span>
 <span class="r-in"><span>        sf_object <span class="op">=</span> <span class="va">grid</span>,</span></span>
 <span class="r-in"><span>        var_name <span class="op">=</span> <span class="st">'jobs'</span>,</span></span>
-<span class="r-in"><span>        dist_type <span class="op">=</span> <span class="st">"euclidean"</span>,</span></span>
-<span class="r-in"><span>        bootstrap_border <span class="op">=</span> <span class="cn">FALSE</span></span></span>
+<span class="r-in"><span>        dist_type <span class="op">=</span> <span class="st">"spatial_link"</span></span></span>
 <span class="r-in"><span>        <span class="op">)</span></span></span>
+<span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">df</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>         UCI location_coef spatial_separation spatial_separation_max</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1 0.2538635     0.5278007           3880.114               7475.899</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1 0.2609465     0.5278007           4281.819               8468.847</span>
 <span class="r-in"><span></span></span>
-<span class="r-in"><span><span class="co"># calculate UCI with bootstrap</span></span></span>
-<span class="r-in"><span><span class="va">df2</span> <span class="op">&lt;-</span> <span class="fu">uci</span><span class="op">(</span></span></span>
-<span class="r-in"><span>        sf_object <span class="op">=</span> <span class="va">grid</span>,</span></span>
-<span class="r-in"><span>        var_name <span class="op">=</span> <span class="st">'jobs'</span>,</span></span>
-<span class="r-in"><span>        dist_type <span class="op">=</span> <span class="st">"euclidean"</span>,</span></span>
-<span class="r-in"><span>        bootstrap_border <span class="op">=</span> <span class="cn">TRUE</span>,</span></span>
-<span class="r-in"><span>        showProgress <span class="op">=</span> <span class="cn">TRUE</span></span></span>
-<span class="r-in"><span>        <span class="op">)</span></span></span>
-<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">df2</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>         UCI location_coef spatial_separation spatial_separation_max</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1 0.2553067     0.5278007           3880.114               7515.494</span>
 </code></pre></div>
     </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

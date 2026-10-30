@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">uci</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.1.9000</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -34,20 +34,25 @@
     </div>
 
     <div class="section level2">
-<h2 class="pkg-version" data-toc-text="development version" id="uci-development-version">uci (development version)<a class="anchor" aria-label="anchor" href="#uci-development-version"></a></h2>
-<ul><li>Major changes
+<h2 class="pkg-version" data-toc-text="1.0.0" id="uci-v100">uci v1.0.0<a class="anchor" aria-label="anchor" href="#uci-v100"></a></h2>
+<ul><li>Breaking changes
 <ul><li>
-<code><a href="../reference/uci.html">uci()</a></code> is faster and uses much less memory. With <code>bootstrap_border = TRUE</code>, each of the 20,000 simulated border configurations is now evaluated algebraically from the border distance matrix instead of by a full matrix product. With <code>dist_type = "spatial_link"</code>, distances are built from the sparse neighbour list, and the full distance matrix is never held in memory, so large grids no longer need several n × n matrices. Results are unchanged (up to floating-point rounding).</li>
-<li>The <code>parallel</code> argument now controls the number of threads used to compute shortest-path distances when <code>dist_type = "spatial_link"</code>, and it has no effect with <code>"euclidean"</code>. With <code>parallel = FALSE</code> (default) these distances are computed on a single thread. Previously {cppRouting} silently used all cores. For mid-size grids this default can be slower than before, so use <code>parallel = TRUE</code> to use all cores (or the number set with <code><a href="https://rdrr.io/pkg/RcppParallel/man/setThreadOptions.html" class="external-link">RcppParallel::setThreadOptions()</a></code>). <code><a href="../reference/uci.html">uci()</a></code> no longer uses {future}/{furrr}, so a <code>future::plan()</code> set by the user has no effect.</li>
+<strong>UCI values change.</strong> New argument <code>max_method</code> sets how the maximum spatial separation (<code>spatial_separation_max</code>) is found. The new default, <code>"exact"</code>, searches for the true maximum, which is guaranteed for Euclidean distances between centroids (see <code><a href="../reference/uci.html">?uci</a></code>). The previous approaches underestimated it by an amount that depends on the shape of the area; they remain available as <code>"heuristic"</code> (old default) and <code>"bootstrap"</code>, and reproduce earlier results. The argument <code>bootstrap_border</code> is deprecated.</li>
+</ul></li>
+<li>Major changes
+<ul><li>
+<code><a href="../reference/uci.html">uci()</a></code> is faster and uses much less memory, especially with <code>dist_type = "spatial_link"</code> and the bootstrap. Results are unchanged.</li>
+<li>
+<code>parallel</code> now sets the number of threads for shortest-path distances (<code>dist_type = "spatial_link"</code> only). The default, <code>FALSE</code>, uses one thread; previously all cores were used.</li>
 </ul></li>
 <li>Minor changes
-<ul><li>New argument <code>remove_islands</code> in <code><a href="../reference/uci.html">uci()</a></code>. If <code>TRUE</code>, only the largest group of neighbouring polygons is kept, so <code>dist_type = "spatial_link"</code> can be used in areas with islands. Polygons outside that group, and their activities, are dropped from the calculation, and a message reports how many (when <code>showProgress = TRUE</code>). The same step is available as the new function <code><a href="../reference/remove_islands.html">remove_islands()</a></code>, which returns the filtered <code>sf</code> object, so it can be inspected or mapped before calling <code><a href="../reference/uci.html">uci()</a></code>.</li>
-<li>New sample data set <code>inst/extdata/grid_rio.rds</code>: a hexagonal grid of Rio de Janeiro with a concave outline, islands and isolated cells, based on data from the Access to Opportunities Project (Ipea, 2019).</li>
+<ul><li>New function <code><a href="../reference/remove_islands.html">remove_islands()</a></code> and argument <code>uci(remove_islands = TRUE)</code> keep only the largest group of contiguous polygons, so <code>"spatial_link"</code> works in areas with islands.</li>
 <li>
-<code><a href="../reference/uci.html">uci()</a></code> now raises informative errors when <code>var_name</code> has negative, infinite or non-numeric values, when all its values are 0 or <code>NA</code>, and, with <code>dist_type = "spatial_link"</code>, when the polygons don’t form one contiguous area. These cases previously returned <code>NaN</code>/<code>NA</code> or a cryptic error from {spdep}.</li>
-<li>With <code>showProgress = TRUE</code>, <code><a href="../reference/uci.html">uci()</a></code> now reports the progress of each step with {cli}, plus a progress bar for the spatial separation on large grids. These progress messages appear only in interactive sessions, so knitted documents, scripts and tests don’t show them; the <code>remove_islands</code> message is still controlled by <code>showProgress</code> alone. The old {pbapply}/{furrr} progress bar of the bootstrap is gone, as the bootstrap now takes well under a second.</li>
-<li>{furrr}, {future} and {pbapply} are no longer dependencies.</li>
-<li>Errors are now raised with {cli}: messages are reworded and formatted, and have class <code>rlang_error</code>. An all-<code>NA</code> <code>var_name</code> column now gives the informative “0 or NA” error instead of a {data.table} type error. {cli} and {rlang} are new dependencies.</li>
+<code><a href="../reference/uci.html">uci()</a></code> now warns when <code>dist_type = "euclidean"</code> and the study area is markedly concave or has a large gap inside it (e.g. a bay or a lake), suggesting <code>"spatial_link"</code> (<a href="https://github.com/ipea/uci/issues/11" class="external-link">#11</a>).</li>
+<li>New sample data set <code>grid_rio.rds</code>, a hexagonal grid of Rio de Janeiro with a concave outline and islands.</li>
+<li>Informative {cli} errors for invalid inputs: fewer than two polygons, negative, infinite or non-numeric values, all values 0 or <code>NA</code>, empty or non-polygon geometries, and non-contiguous polygons with <code>"spatial_link"</code>.</li>
+<li>Progress messages with {cli}, shown only in interactive sessions.</li>
+<li>{cli} and {rlang} are new dependencies; {furrr}, {future} and {pbapply} are no longer used.</li>
 </ul></li>
 </ul></div>
     <div class="section level2">

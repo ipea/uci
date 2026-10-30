@@ -20,7 +20,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">uci</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.1.9000</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -63,12 +63,12 @@
 <p><strong>uci</strong> is an <code>R</code> package to measure the
 centrality of cities and regions. The package implements the Urban
 Centrality Index (UCI) originally proposed by <span class="citation">Pereira et al. (2013)</span>. UCI measures the extent
-to which the spatial organization of a city varies from extreme
-monocentric to extreme polycentric in a continuous scale, rather than
-considering a binary classification (<em>either</em> monocentric
-<em>or</em> polycentric). UCI values range from 0 to 1. Values closer to
-0 indicate more polycentric patterns and values closer to 1 indicate a
-more monocentric urban form.</p>
+to which the spatial organization of a city varies from monocentric to
+polycentric in a continuous scale, rather than considering a binary
+classification (<em>either</em> monocentric <em>or</em> polycentric).
+UCI values range from 0 to 1. Values closer to 0 indicate more
+polycentric patterns and values closer to 1 indicate a more monocentric
+urban form.</p>
 <div class="section level2">
 <h2 id="installation">Installation<a class="anchor" aria-label="anchor" href="#installation"></a>
 </h2>
@@ -138,7 +138,8 @@ municipalities.</p>
 <h3 id="calculating-uci">Calculating UCI<a class="anchor" aria-label="anchor" href="#calculating-uci"></a>
 </h3>
 <p>In the example below, we calculate how mono/polycentric our study
-area is considering its spatial distribution of jobs.</p>
+area is considering its spatial distribution of jobs considering
+Euclidian distances between polygons.</p>
 <div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">df</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/uci.html">uci</a></span><span class="op">(</span></span>
 <span>  sf_object <span class="op">=</span> <span class="va">grid</span>,</span>
@@ -146,9 +147,9 @@ area is considering its spatial distribution of jobs.</p>
 <span>  dist_type <span class="op">=</span> <span class="st">'euclidean'</span></span>
 <span>  <span class="op">)</span></span>
 <span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">df</span><span class="op">)</span></span>
+<span><span class="va">df</span></span>
 <span><span class="co">#&gt;         UCI location_coef spatial_separation spatial_separation_max</span></span>
-<span><span class="co">#&gt; 1 0.2538635     0.5278007           3880.114               7475.899</span></span></code></pre></div>
+<span><span class="co">#&gt; 1 0.2612105     0.5278007           3880.114               7681.927</span></span></code></pre></div>
 <p>By default, the <code><a href="../reference/uci.html">uci()</a></code> function uses Euclidean distances
 between polygons. However, Euclidean distances can lead to misleading
 results in the case of areas with a concave shape (like a bay). In these
@@ -169,17 +170,19 @@ connecting disconnected parts of the area.</p>
 <span>  dist_type <span class="op">=</span> <span class="st">'spatial_link'</span></span>
 <span>  <span class="op">)</span></span>
 <span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">df</span><span class="op">)</span></span>
+<span><span class="va">df</span></span>
 <span><span class="co">#&gt;         UCI location_coef spatial_separation spatial_separation_max</span></span>
-<span><span class="co">#&gt; 1 0.2535891     0.5278007           4281.819               8241.617</span></span></code></pre></div>
-<p>The package also includes a larger and more irregular sample data
-set, <code>grid_rio.rds</code>. It covers the municipality of Rio de
-Janeiro, Brazil, with a concave outline around the Guanabara and
-Sepetiba bays and several islands, including single isolated cells. The
-data comes from the <a href="https://www.ipea.gov.br/acessooportunidades/en/" class="external-link">Access to
+<span><span class="co">#&gt; 1 0.2609465     0.5278007           4281.819               8468.847</span></span></code></pre></div>
+<p>Where there are no bridges or roads connecting isolated polygons, we
+can remove them by passing the arugment
+<code>remove_islands = TRUE</code>. Let’s see this in another example
+data set using the city of Rio de Janeiro, Brazil.</p>
+<p>The <code>grid_rio.rds</code> data set covers the municipality of
+Rio, with a concave outline around the Guanabara and Sepetiba bays and
+several islands, including single isolated cells. The data comes from
+the <a href="https://www.ipea.gov.br/acessooportunidades/en/" class="external-link">Access to
 Opportunities Project</a> (AOP, Ipea, 2019), aggregated to H3 resolution
-8. Because of its islands, the full grid only works with
-<code>dist_type = 'euclidean'</code>:</p>
+8.</p>
 <div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">grid_rio</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/readRDS.html" class="external-link">readRDS</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="va">data_dir</span>, <span class="st">"grid_rio.rds"</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
 <div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
@@ -189,8 +192,9 @@ Opportunities Project</a> (AOP, Ipea, 2019), aggregated to H3 resolution
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggtheme.html" class="external-link">theme_void</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
 <p><img src="uci_files/figure-html/unnamed-chunk-10-1.png" class="r-plt" alt="" width="80%"></p>
 <p>As you can see, the case of Rio include a few islands disconnected
-from mainland. In this case, the user has two options. One of them is
-using <code>dist_type = 'euclidean'</code>.</p>
+from mainland. Because of these islands, we can only consider the full
+grid in the calculation of UCI if we use
+<code>dist_type = 'euclidean'</code>.</p>
 <div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span></span>
 <span><span class="va">df</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/uci.html">uci</a></span><span class="op">(</span></span>
@@ -198,27 +202,36 @@ using <code>dist_type = 'euclidean'</code>.</p>
 <span>  var_name <span class="op">=</span> <span class="st">'jobs'</span>,</span>
 <span>  dist_type <span class="op">=</span> <span class="st">'euclidean'</span></span>
 <span>  <span class="op">)</span></span>
+<span><span class="co">#&gt; Warning: The study area has a concave shape or a large gap inside it (e.g. a bay or a</span></span>
+<span><span class="co">#&gt; lake). Euclidean distances between centroids can cross areas outside it and</span></span>
+<span><span class="co">#&gt; bias UCI.</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">ℹ</span> Consider `dist_type = "spatial_link"`.</span></span>
 <span></span>
 <span><span class="va">df</span></span>
 <span><span class="co">#&gt;         UCI location_coef spatial_separation spatial_separation_max</span></span>
-<span><span class="co">#&gt; 1 0.3297768      0.693971           17632.32               33598.34</span></span></code></pre></div>
+<span><span class="co">#&gt; 1 0.4201327      0.693971           17632.32               44684.47</span></span></code></pre></div>
+<p>The warning is expected: Rio’s coastline is concave, so Euclidean
+distances between centroids can cross the bays.</p>
 <p>Alternatively, you use <code>dist_type = 'spatial_link'</code> and
 pass <code>remove_islands = TRUE</code>. In this case,
 <code><a href="../reference/uci.html">uci()</a></code> drops the islands calculates UCI only for the largest
-group of neighbouring polygons:</p>
+group of neighbouring polygons. For large areas, users can speed up the
+process of calculating ‘spatial_link’ distances by passing
+<code>parallel = FALSE</code>.</p>
 <div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">df</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/uci.html">uci</a></span><span class="op">(</span></span>
 <span>  sf_object <span class="op">=</span> <span class="va">grid_rio</span>,</span>
 <span>  var_name <span class="op">=</span> <span class="st">'jobs'</span>,</span>
 <span>  dist_type <span class="op">=</span> <span class="st">'spatial_link'</span>,</span>
-<span>  remove_islands <span class="op">=</span> <span class="cn">TRUE</span></span>
+<span>  remove_islands <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  parallel <span class="op">=</span> <span class="cn">FALSE</span></span>
 <span>  <span class="op">)</span></span>
 <span><span class="co">#&gt; Removed 44 polygons (255 <span style="color: #00BB00;">jobs</span>) outside the largest contiguous area of</span></span>
 <span><span class="co">#&gt; `sf_object`.</span></span>
 <span></span>
 <span><span class="va">df</span></span>
 <span><span class="co">#&gt;         UCI location_coef spatial_separation spatial_separation_max</span></span>
-<span><span class="co">#&gt; 1 0.3166672     0.6894746           19331.93               35752.71</span></span></code></pre></div>
+<span><span class="co">#&gt; 1 0.4045099     0.6894746           19331.93               46773.76</span></span></code></pre></div>
 <p>To see which polygons are dropped before calculating UCI, use the
 function <code><a href="../reference/remove_islands.html">remove_islands()</a></code>. It returns the <code>sf</code>
 object with only the largest group of neighbouring polygons, which you
@@ -294,43 +307,58 @@ closed-form solution. In a very simple square grid, <code>Vmax</code> is
 obtained when each corner has one-fourth of the total employment. In a
 region forming a perfect circle, the maximum value of V occurs when all
 employment is evenly distributed along the external edge.</p>
-<p>In the original paper, <span class="citation">Pereira et al.
-(2013)</span> proposed a simple heuristic approach to calculate
-<code>Vmax</code>(the “opposite of maximum proximity”) as a homogeneous
-distribution of values along the edge of the study area. This is the
-default strategy used in the <code><a href="../reference/uci.html">uci()</a></code> function with the
-default parameter <code>bootstrap_border = FALSE</code>. Nonetheless,
-the users can also use a bootstrap simulation approach to estimate
-<code>Vmax</code> by setting <code>bootstrap_border = TRUE</code>.</p>
 <div class="section level4">
-<h4 id="bootstraping-vmax">Bootstraping <code>Vmax</code><a class="anchor" aria-label="anchor" href="#bootstraping-vmax"></a>
+<h4 id="finding-vmax">Finding <code>Vmax</code><a class="anchor" aria-label="anchor" href="#finding-vmax"></a>
 </h4>
-<p>Using bootstrap to find max Venables spatial separation. With
-<code>dist_type = "spatial_link"</code>, users can set
-<code>parallel = TRUE</code> to compute shortest-path distances using
-several threads.</p>
+<p>By default (<code>max_method = "exact"</code>), <code><a href="../reference/uci.html">uci()</a></code>
+searches for the distribution of activities among the polygons on the
+border of the study area that maximises <code>V</code>. With Euclidean
+distances between centroids this problem is concave, so the search (a
+simple multiplicative update of the weights, stopped when the optimality
+conditions hold) reaches the global maximum. The result is then refined
+with the self distance of each polygon included, so that
+<code>Vmax</code> is a stationary point of the same quantity as
+<code>V</code>, and checked against the polygons outside the border.
+With <code>"spatial_link"</code> distances the same procedure gives a
+stationary point.</p>
 <div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">df_bootstrap</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/uci.html">uci</a></span><span class="op">(</span></span>
+<code class="sourceCode R"><span><span class="va">df_exact</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/uci.html">uci</a></span><span class="op">(</span></span>
 <span>  sf_object <span class="op">=</span> <span class="va">grid</span>,</span>
 <span>  var_name <span class="op">=</span> <span class="st">'jobs'</span>,</span>
-<span>  bootstrap_border <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  showProgress <span class="op">=</span> <span class="cn">FALSE</span></span>
 <span><span class="op">)</span></span>
 <span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">df_bootstrap</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">df_exact</span><span class="op">)</span></span>
 <span><span class="co">#&gt;         UCI location_coef spatial_separation spatial_separation_max</span></span>
-<span><span class="co">#&gt; 1 0.2553067     0.5278007           3880.114               7515.494</span></span></code></pre></div>
-<p>This bootstrap approach simulates 20000 random distributions of
-activities along the border. It practice, it works interacting two
-simulations: (1) it simulates that all jobs are concentrated in up to 2,
-3, 4, 5 … 51 polygons along the border, and (2) for each number of
-selected polygons, it shuffles 400 random positions of those polygons
-along the border.</p>
-<p>The bootstrap approach is more computationally expensive but it
-returns <code>Vmax</code> values that can be between 5 and 25% higher
-than the heuristic approach. Although the bootstrap simulation might
-still not return the maximum theoretical value of spatial separation, it
-is probably very close to it</p>
+<span><span class="co">#&gt; 1 0.2612105     0.5278007           3880.114               7681.927</span></span></code></pre></div>
+<p>With <code>dist_type = "spatial_link"</code>, users can set
+<code>parallel = TRUE</code> to compute shortest-path distances using
+several threads.</p>
+<p>Two other approaches are kept so that results of previous versions
+can be reproduced. In the original paper, <span class="citation">Pereira
+et al. (2013)</span> proposed a simple heuristic approach to calculate
+<code>Vmax</code> (the “opposite of maximum proximity”) as a homogeneous
+distribution of values along the edge of the study area
+(<code>max_method = "heuristic"</code>). The bootstrap approach
+(<code>max_method = "bootstrap"</code>) simulates 20000 random
+distributions of activities along the border: it simulates that all jobs
+are concentrated in up to 2, 3, 4, 5 … 51 polygons along the border, and
+for each number of selected polygons it shuffles 400 random positions of
+those polygons along the border, keeping the largest <code>V</code>
+found. Both are lower bounds of <code>Vmax</code>, so they overestimate
+<code>V / Vmax</code> and underestimate UCI, by an amount that depends
+on the shape of the study area.</p>
+<div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">df_heuristic</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/uci.html">uci</a></span><span class="op">(</span></span>
+<span>  sf_object <span class="op">=</span> <span class="va">grid</span>,</span>
+<span>  var_name <span class="op">=</span> <span class="st">'jobs'</span>,</span>
+<span>  max_method <span class="op">=</span> <span class="st">"heuristic"</span>,</span>
+<span>  showProgress <span class="op">=</span> <span class="cn">FALSE</span></span>
+<span><span class="op">)</span></span>
+<span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">df_heuristic</span><span class="op">)</span></span>
+<span><span class="co">#&gt;         UCI location_coef spatial_separation spatial_separation_max</span></span>
+<span><span class="co">#&gt; 1 0.2538635     0.5278007           3880.114               7475.899</span></span></code></pre></div>
 </div>
 </div>
 </div>

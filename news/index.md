@@ -1,63 +1,44 @@
 # Changelog
 
-## uci (development version)
+## uci v1.0.0
 
+- Breaking changes
+  - **UCI values change.** New argument `max_method` sets how the
+    maximum spatial separation (`spatial_separation_max`) is found. The
+    new default, `"exact"`, searches for the true maximum, which is
+    guaranteed for Euclidean distances between centroids (see
+    [`?uci`](https://ipea.github.io/uci/reference/uci.md)). The previous
+    approaches underestimated it by an amount that depends on the shape
+    of the area; they remain available as `"heuristic"` (old default)
+    and `"bootstrap"`, and reproduce earlier results. The argument
+    `bootstrap_border` is deprecated.
 - Major changes
   - [`uci()`](https://ipea.github.io/uci/reference/uci.md) is faster and
-    uses much less memory. With `bootstrap_border = TRUE`, each of the
-    20,000 simulated border configurations is now evaluated
-    algebraically from the border distance matrix instead of by a full
-    matrix product. With `dist_type = "spatial_link"`, distances are
-    built from the sparse neighbour list, and the full distance matrix
-    is never held in memory, so large grids no longer need several n × n
-    matrices. Results are unchanged (up to floating-point rounding).
-  - The `parallel` argument now controls the number of threads used to
-    compute shortest-path distances when `dist_type = "spatial_link"`,
-    and it has no effect with `"euclidean"`. With `parallel = FALSE`
-    (default) these distances are computed on a single thread.
-    Previously {cppRouting} silently used all cores. For mid-size grids
-    this default can be slower than before, so use `parallel = TRUE` to
-    use all cores (or the number set with
-    [`RcppParallel::setThreadOptions()`](https://rdrr.io/pkg/RcppParallel/man/setThreadOptions.html)).
-    [`uci()`](https://ipea.github.io/uci/reference/uci.md) no longer
-    uses {future}/{furrr}, so a `future::plan()` set by the user has no
-    effect.
+    uses much less memory, especially with `dist_type = "spatial_link"`
+    and the bootstrap. Results are unchanged.
+  - `parallel` now sets the number of threads for shortest-path
+    distances (`dist_type = "spatial_link"` only). The default, `FALSE`,
+    uses one thread; previously all cores were used.
 - Minor changes
-  - New argument `remove_islands` in
-    [`uci()`](https://ipea.github.io/uci/reference/uci.md). If `TRUE`,
-    only the largest group of neighbouring polygons is kept, so
-    `dist_type = "spatial_link"` can be used in areas with islands.
-    Polygons outside that group, and their activities, are dropped from
-    the calculation, and a message reports how many (when
-    `showProgress = TRUE`). The same step is available as the new
-    function
-    [`remove_islands()`](https://ipea.github.io/uci/reference/remove_islands.md),
-    which returns the filtered `sf` object, so it can be inspected or
-    mapped before calling
-    [`uci()`](https://ipea.github.io/uci/reference/uci.md).
-  - New sample data set `inst/extdata/grid_rio.rds`: a hexagonal grid of
-    Rio de Janeiro with a concave outline, islands and isolated cells,
-    based on data from the Access to Opportunities Project (Ipea, 2019).
-  - [`uci()`](https://ipea.github.io/uci/reference/uci.md) now raises
-    informative errors when `var_name` has negative, infinite or
-    non-numeric values, when all its values are 0 or `NA`, and, with
-    `dist_type = "spatial_link"`, when the polygons don’t form one
-    contiguous area. These cases previously returned `NaN`/`NA` or a
-    cryptic error from {spdep}.
-  - With `showProgress = TRUE`,
-    [`uci()`](https://ipea.github.io/uci/reference/uci.md) now reports
-    the progress of each step with {cli}, plus a progress bar for the
-    spatial separation on large grids. These progress messages appear
-    only in interactive sessions, so knitted documents, scripts and
-    tests don’t show them; the `remove_islands` message is still
-    controlled by `showProgress` alone. The old {pbapply}/{furrr}
-    progress bar of the bootstrap is gone, as the bootstrap now takes
-    well under a second.
-  - {furrr}, {future} and {pbapply} are no longer dependencies.
-  - Errors are now raised with {cli}: messages are reworded and
-    formatted, and have class `rlang_error`. An all-`NA` `var_name`
-    column now gives the informative “0 or NA” error instead of a
-    {data.table} type error. {cli} and {rlang} are new dependencies.
+  - New function
+    [`remove_islands()`](https://ipea.github.io/uci/reference/remove_islands.md)
+    and argument `uci(remove_islands = TRUE)` keep only the largest
+    group of contiguous polygons, so `"spatial_link"` works in areas
+    with islands.
+  - [`uci()`](https://ipea.github.io/uci/reference/uci.md) now warns
+    when `dist_type = "euclidean"` and the study area is markedly
+    concave or has a large gap inside it (e.g. a bay or a lake),
+    suggesting `"spatial_link"`
+    ([\#11](https://github.com/ipea/uci/issues/11)).
+  - New sample data set `grid_rio.rds`, a hexagonal grid of Rio de
+    Janeiro with a concave outline and islands.
+  - Informative {cli} errors for invalid inputs: fewer than two
+    polygons, negative, infinite or non-numeric values, all values 0 or
+    `NA`, empty or non-polygon geometries, and non-contiguous polygons
+    with `"spatial_link"`.
+  - Progress messages with {cli}, shown only in interactive sessions.
+  - {cli} and {rlang} are new dependencies; {furrr}, {future} and
+    {pbapply} are no longer used.
 
 ## uci 0.3.1
 

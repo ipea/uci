@@ -55,24 +55,21 @@ Other urban centrality index:
 ``` r
 # load data
 data_dir <- system.file("extdata", package = "uci")
-grid <- readRDS(file.path(data_dir, "grid_bho.rds"))
+# sf::st_as_sf() loads {sf}, whose methods subset and bind sf objects
+grid <- sf::st_as_sf(readRDS(file.path(data_dir, "grid_bho.rds")))
 
 # add an island: a copy of the first cell, shifted away from the grid
 island <- grid[1, ]
 sf::st_geometry(island) <- sf::st_geometry(island) + c(0.5, 0)
-#> Error in st_geometry.sf(island): attr(obj, "sf_column") does not point to a geometry column.
-#> Did you rename it, without setting st_geometry(obj) <- "newname"?
 sf::st_crs(island) <- sf::st_crs(grid)
-#> Error in UseMethod("st_crs<-"): no applicable method for 'st_crs<-' applied to an object of class "list"
 grid_island <- rbind(grid, island)
-#> Error in st_geometry.sf(x): attr(obj, "sf_column") does not point to a geometry column.
-#> Did you rename it, without setting st_geometry(obj) <- "newname"?
 nrow(grid_island)
-#> Error: object 'grid_island' not found
+#> [1] 899
 
 # remove the island
 grid_main <- remove_islands(grid_island, var_name = 'jobs')
-#> Error: object 'grid_island' not found
+#> Removed 1 polygon (180 jobs) outside the largest contiguous area of
+#> `sf_object`.
 nrow(grid_main)
-#> Error: object 'grid_main' not found
+#> [1] 898
 ```
