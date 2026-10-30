@@ -346,6 +346,27 @@ test_that("raises errors due to incorrect input", {
   testthat::expect_error(tester(parallel = 'banana'))
   testthat::expect_error(tester(remove_islands = 'banana'))
 
+  # empty geometries
+  grid_empty <- grid
+  sf::st_geometry(grid_empty)[c(3, 7)] <- sf::st_polygon()
+  testthat::expect_error(
+    tester(sf_object = grid_empty), "2 polygons with empty geometry",
+    class = "rlang_error"
+  )
+
+  # points and lines instead of polygons
+  grid_points <- suppressWarnings(sf::st_centroid(grid))
+  testthat::expect_error(
+    tester(sf_object = grid_points), "POLYGON or MULTIPOLYGON",
+    class = "rlang_error"
+  )
+  grid_mixed <- grid
+  sf::st_geometry(grid_mixed)[1:2] <-
+    sf::st_boundary(sf::st_geometry(grid)[1:2])
+  testthat::expect_error(
+    tester(sf_object = grid_mixed), "in 2 rows", class = "rlang_error"
+  )
+
 })
 
 test_that("raises errors due to invalid values in var_name", {

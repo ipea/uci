@@ -127,6 +127,31 @@ uci <- function(
     checkmate::check_numeric(sf_object[[var_name]], lower = 0, finite = TRUE),
     paste0("sf_object$", var_name)
   )
+  # empty geometries have no area or centroid and break the distance steps
+  empty <- which(sf::st_is_empty(sf_object))
+  if (length(empty) > 0) {
+    cli::cli_abort(
+      c(
+        "{.arg sf_object} has {length(empty)} polygon{?s} with empty
+         geometry, in row{?s} {empty}.",
+        "i" = "Remove empty geometries first, e.g. with
+               {.code sf_object[!sf::st_is_empty(sf_object), ]}."
+      )
+    )
+  }
+  # points and lines have no area: only polygons are allowed
+  geom_type <- as.character(sf::st_geometry_type(sf_object))
+  not_polygon <- which(!geom_type %in% c("POLYGON", "MULTIPOLYGON"))
+  if (length(not_polygon) > 0) {
+    cli::cli_abort(
+      c(
+        "{.arg sf_object} must contain only POLYGON or MULTIPOLYGON
+         geometries.",
+        "x" = "Found {.val {unique(geom_type[not_polygon])}} in
+               {length(not_polygon)} row{?s}."
+      )
+    )
+  }
   abort_if_invalid(
     checkmate::check_choice(dist_type, c('spatial_link', 'euclidean')),
     "dist_type"
