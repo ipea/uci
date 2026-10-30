@@ -8,7 +8,7 @@
 ## Citation
 
 Source:
-[`inst/CITATION`](https://github.com/ipea/uci/blob/main/inst/CITATION)
+[`inst/CITATION`](https://github.com/ipea/uci/blob/v1.0.0/inst/CITATION)
 
 Pereira, R. H. M., Nadalin, V., Monasterio, L., & Albuquerque, P. H.
 (2013). Urban centrality: a simple index. Transportation Research Part
