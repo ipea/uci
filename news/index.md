@@ -2,6 +2,8 @@
 
 ## uci v1.0.0
 
+CRAN release: 2026-10-30
+
 - Breaking changes
   - **UCI values change.** New argument `max_method` sets how the
     maximum spatial separation (`spatial_separation_max`) is found. The

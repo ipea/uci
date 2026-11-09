@@ -72,7 +72,7 @@ head(df)
 #> 1 0.2612105     0.5278007           3880.114               7681.927
 ```
 
-# Citation ![ipea](https://github.com/ipea/uci/raw/main/man/figures/ipea_logo.png)
+# Citation
 
 The R package **uci** is developed by a team at the Institute for
 Applied Economic Research (Ipea), Brazil. If you use this package in
